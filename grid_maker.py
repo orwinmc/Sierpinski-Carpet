@@ -89,7 +89,7 @@ def get_coordinates(grid_layout):
 
     return coordinates
 
-def compute_laplacian(indexed_layout):
+def compute_laplacian(indexed_layout, crosswires):
     # Gets coordiantes by checking which are not -1
     num_coordinates = int(np.sum(indexed_layout != -1))
 
@@ -99,16 +99,16 @@ def compute_laplacian(indexed_layout):
         for x, val in enumerate(row):
             if val != -1:
                 neighbors = 0
-                if x > 0 and indexed_layout[y, x-1] != -1:
+                if x > 0 and y % (crosswires+1) != 0 and indexed_layout[y, x-1] != -1:
                     laplacian[indexed_layout[y, x], indexed_layout[y, x-1]] = 1
                     neighbors+=1
-                if y > 0 and indexed_layout[y-1, x] != -1:
+                if y > 0 and x % (crosswires+1) != 0 and indexed_layout[y-1, x] != -1:
                     laplacian[indexed_layout[y, x], indexed_layout[y-1, x]] = 1
                     neighbors+=1
-                if x < np.shape(indexed_layout)[1]-1 and indexed_layout[y, x+1] != -1:
+                if x < np.shape(indexed_layout)[1]-1 and y % (crosswires+1) != 0 and indexed_layout[y, x+1] != -1:
                     laplacian[indexed_layout[y, x], indexed_layout[y, x+1]] = 1
                     neighbors+=1
-                if y < np.shape(indexed_layout)[0]-1 and indexed_layout[y+1, x] != -1:
+                if y < np.shape(indexed_layout)[0]-1 and x % (crosswires+1) != 0 and indexed_layout[y+1, x] != -1:
                     laplacian[indexed_layout[y, x], indexed_layout[y+1, x]] = 1
                     neighbors+=1
 
@@ -123,7 +123,7 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 0
+    level = 1
     crosswires = 2
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
@@ -137,11 +137,11 @@ def main():
     print(coordinates)
 
 
-    print('Number of Vertices: %d' % np.size(coordinates))
+    print('Number of Vertices: %d' % (np.shape(coordinates)[0]))
 
     print('Computing \'laplacian\' ...')
-    laplacian = compute_laplacian(indexed_layout)
-    print(laplacian)
+    laplacian = compute_laplacian(indexed_layout, crosswires)
+    print(laplacian[21])
 
 
 if __name__ == '__main__':
