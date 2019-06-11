@@ -5,31 +5,30 @@ import sys # used to eliminate printing truncation
 
 # Constructs a 2D array of booleans, true = a given vertex is inside the SC
 
-def get_grid_layout(b, l, level, c):
-    '''
-        Generates a 2D array that looks something like this
-
-        0,1,1,1,0
-        1,1,1,1,1
-        1,1,1,1,1
-        1,1,1,1,1
-        0,1,1,1,0
-
-        Works on multiple levels!
-    '''
+def get_grid_layout(b, l, level):
     if (l!=0 and b%2 != l%2) or b==l:
         print("Invalid Input!")
         return
 
-    num_vertices = (c+1) * b**level + 1
+    num_vertices = 2 * b**level + 1
     sc = np.ones((num_vertices, num_vertices))
 
     for y, row in enumerate(sc):
         for x, val in enumerate(sc):
-            if x%(c+1) == 0 and y%(c+1) == 0:
+            if x%2 != y%2:
                 sc[y, x] = 0
 
     for current_level in range(1, level+1):
+        vertices_current = 2*b**current_level + 1
+        prev_vertices_current = 2*b**(current_level-1) + 1
+        hole_size = l*2*b**(current_level-1)-1
+        for i in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
+            for j in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
+                sc[i:i+hole_size, j:j+hole_size] = 0
+
+    print(sc)
+
+    '''for current_level in range(1, level+1):
         vertices_current = (c+1)*b**current_level + 1
         prev_vertices_current = (c+1)*b**(current_level-1) + 1
         hole_size = l*(c+1)*b**(current_level-1)-1
@@ -37,7 +36,7 @@ def get_grid_layout(b, l, level, c):
             for j in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
                 sc[i:i+hole_size, j:j+hole_size] = 0
 
-    print(sc)
+    print(sc)'''
 
     return sc
 
@@ -79,7 +78,7 @@ def get_coordinates(grid_layout):
 
     return coordinates
 
-def compute_laplacian(indexed_layout, crosswires):
+def compute_laplacian(indexed_layout):
     # Gets coordiantes by checking which are not -1
     num_coordinates = int(np.sum(indexed_layout != -1))
 
@@ -89,17 +88,17 @@ def compute_laplacian(indexed_layout, crosswires):
         for x, val in enumerate(row):
             if val != -1:
                 neighbors = 0
-                if x > 0 and y % (crosswires+1) != 0 and indexed_layout[y, x-1] != -1:
-                    laplacian[indexed_layout[y, x], indexed_layout[y, x-1]] = 1
+                if x > 0 and y > 0 and indexed_layout[y-1, x-1] != -1:
+                    laplacian[indexed_layout[y, x], indexed_layout[y-1, x-1]] = 1
                     neighbors+=1
-                if y > 0 and x % (crosswires+1) != 0 and indexed_layout[y-1, x] != -1:
-                    laplacian[indexed_layout[y, x], indexed_layout[y-1, x]] = 1
+                if x < np.shape(indexed_layout)[1]-1 and y > 0 and indexed_layout[y-1, x+1] != -1:
+                    laplacian[indexed_layout[y, x], indexed_layout[y-1, x+1]] = 1
                     neighbors+=1
-                if x < np.shape(indexed_layout)[1]-1 and y % (crosswires+1) != 0 and indexed_layout[y, x+1] != -1:
-                    laplacian[indexed_layout[y, x], indexed_layout[y, x+1]] = 1
+                if x > 0 and y < np.shape(indexed_layout)[0]-1 and indexed_layout[y+1, x-1] != -1:
+                    laplacian[indexed_layout[y, x], indexed_layout[y+1, x-1]] = 1
                     neighbors+=1
-                if y < np.shape(indexed_layout)[0]-1 and x % (crosswires+1) != 0 and indexed_layout[y+1, x] != -1:
-                    laplacian[indexed_layout[y, x], indexed_layout[y+1, x]] = 1
+                if x < np.shape(indexed_layout)[1]-1 and y < np.shape(indexed_layout)[0]-1 and indexed_layout[y+1, x+1] != -1:
+                    laplacian[indexed_layout[y, x], indexed_layout[y+1, x+1]] = 1
                     neighbors+=1
 
                 laplacian[indexed_layout[y, x], indexed_layout[y, x]] = -neighbors
@@ -113,29 +112,23 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 1
-    crosswires = 3
+    level = 2
 
-    grid_layout = get_grid_layout(b, l, level, crosswires)
+    grid_layout = get_grid_layout(b, l, level)
     plt.imshow(grid_layout)
     plt.show()
 
     print('Computing \'indexed_layout\' ...')
     indexed_layout = get_indexed_layout(grid_layout)
-    #plt.imshow(indexed_layout)
 
     print('Computing \'coordinates\' ...')
     coordinates = get_coordinates(grid_layout)
 
-    print('Number of Vertices: %d' % (np.shape(coordinates)[0]))
-
     print('Computing \'laplacian\' ...')
-    laplacian = compute_laplacian(indexed_layout, crosswires)
+    laplacian = compute_laplacian(indexed_layout)
     print(laplacian)
     plt.imshow(laplacian)
     plt.show()
-
-
 
 
 
