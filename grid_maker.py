@@ -2,7 +2,19 @@ import numpy as np
 import sys # used to eliminate printing truncation
 
 # Constructs a 2D array of booleans, true = a given vertex is inside the SC
+
 def get_grid_layout(b, l, level, num_crosswires):
+    '''
+        Generates a 2D array that looks something like this
+
+        0,1,1,1,0
+        1,1,1,1,1
+        1,1,1,1,1
+        1,1,1,1,1
+        0,1,1,1,0
+
+        Works on multiple levels!
+    '''
     if b%2 != l%2 or b==l:
         print("Invalid Input!")
         return
@@ -41,6 +53,17 @@ def get_grid_layout(b, l, level, num_crosswires):
     return base
 
 def get_indexed_layout(grid_layout):
+    '''
+        Generates a 2D array that looks something like this
+
+        -1,0,1,2,-1
+        3,4,5,6,7
+        8,9,10,11,12
+        13,14,15,16,17
+        -1,18,19,20,-1
+
+        Each number represents the row of vector which will hold the laplacian
+    '''
     indexed_layout = np.full(np.shape(grid_layout), -1, dtype=object)
     counter = 0
     for y, row in enumerate(grid_layout):
@@ -52,6 +75,9 @@ def get_indexed_layout(grid_layout):
     return indexed_layout
 
 def get_coordinates(grid_layout):
+    '''
+        Returns an 2D array for which each row is the (row,col) coordinates
+    '''
     num_coordinates = int(np.sum(grid_layout))
     coordinates = np.zeros((num_coordinates, 2), dtype=object)
     counter = 0
@@ -91,12 +117,14 @@ def compute_laplacian(indexed_layout):
     return laplacian
 
 def main():
+    # Tries to make printing better (fails)
     np.set_printoptions(threshold=sys.maxsize)
+
     # Input Values
     b = 3
     l = 1
-    level = 2
-    crosswires = 1
+    level = 0
+    crosswires = 2
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
 
