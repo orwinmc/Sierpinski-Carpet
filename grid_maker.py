@@ -113,8 +113,8 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 1
-    crosswires = 3
+    level = 2
+    crosswires = 1
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
     plt.imshow(grid_layout)

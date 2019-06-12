@@ -86,6 +86,7 @@ def compute_laplacian(indexed_layout):
     laplacian = np.zeros((num_coordinates, num_coordinates))
     for y, row in enumerate(indexed_layout):
         for x, val in enumerate(row):
+            #print(x,y)
             if val != -1:
                 neighbors = 0
                 if x > 0 and y > 0 and indexed_layout[y-1, x-1] != -1:
@@ -107,12 +108,12 @@ def compute_laplacian(indexed_layout):
 
 def main():
     # Tries to make printing better (fails)
-    np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
+    #np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
 
     # Input Values
     b = 3
     l = 1
-    level = 2
+    level = 7
 
     grid_layout = get_grid_layout(b, l, level)
     plt.imshow(grid_layout)
@@ -123,12 +124,13 @@ def main():
 
     print('Computing \'coordinates\' ...')
     coordinates = get_coordinates(grid_layout)
+    print(len(coordinates))
 
     print('Computing \'laplacian\' ...')
     laplacian = compute_laplacian(indexed_layout)
     print(laplacian)
-    plt.imshow(laplacian)
-    plt.show()
+    #plt.imshow(laplacian)
+    #plt.show()
 
 
 
