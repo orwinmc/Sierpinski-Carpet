@@ -54,11 +54,45 @@ def get_indexed_layout(grid_layout):
     '''
     indexed_layout = np.full(np.shape(grid_layout), -1, dtype=object)
     counter = 0
+
+    # Top
+    for i in range(np.shape(grid_layout)[1]-1):
+        indexed_layout[0, i] = counter
+        counter+=1
+
+    # Right
+    for i in range(0, np.shape(grid_layout)[0]-1):
+        indexed_layout[i, np.shape(grid_layout)[1]-1] = counter
+        counter+=1
+
+    # Bottom
+    for i in range(np.shape(grid_layout)[1]-1, 0, -1):
+        indexed_layout[np.shape(grid_layout)[0]-1, i] = counter
+        counter+=1
+
+    # Left
+    for i in range(np.shape(grid_layout)[0]-1, 0, -1):
+        indexed_layout[i, 0] = counter
+        counter+=1
+
+    # Left
+    '''for i in range(np.shape(grid_layout)[0]):
+        indexed_layout[i, 0] = counter
+        counter+=1
+
+    # Right
+    for i in range(np.shape(grid_layout)[0]):
+        indexed_layout[i, np.shape(grid_layout)[1]-1] = counter
+        counter+=1'''
+
+    # Interior
     for y, row in enumerate(grid_layout):
         for x, val in enumerate(row):
-            if val:
+            if val and indexed_layout[y, x] == -1:
                 indexed_layout[y,x] = counter
                 counter+=1
+
+    print(indexed_layout)
 
     return indexed_layout
 
@@ -113,7 +147,7 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 7
+    level = 2
 
     grid_layout = get_grid_layout(b, l, level)
     plt.imshow(grid_layout)
@@ -129,8 +163,8 @@ def main():
     print('Computing \'laplacian\' ...')
     laplacian = compute_laplacian(indexed_layout)
     print(laplacian)
-    #plt.imshow(laplacian)
-    #plt.show()
+    plt.imshow(laplacian)
+    plt.show()
 
 
 
