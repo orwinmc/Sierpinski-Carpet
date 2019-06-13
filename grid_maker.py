@@ -153,6 +153,7 @@ def compute_energy(laplacian, u_n):
     energy = 0
 
     for y in range(np.shape(laplacian)[0]):
+        #print(y)
         for x in range(np.shape(laplacian)[1]):
             if laplacian[y, x] == 1:
 
@@ -168,7 +169,7 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 3
+    level = 4
     crosswires = 1
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
