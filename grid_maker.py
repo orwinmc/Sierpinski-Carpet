@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys # used to eliminate printing truncation
+from scipy import sparse
+import scipy.sparse.linalg as la
 
 
 # Constructs a 2D array of booleans, true = a given vertex is inside the SC
@@ -37,7 +39,7 @@ def get_grid_layout(b, l, level, c):
             for j in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
                 sc[i:i+hole_size, j:j+hole_size] = 0
 
-    print(sc)
+    #print(sc)
 
     return sc
 
@@ -55,11 +57,27 @@ def get_indexed_layout(grid_layout):
     '''
     indexed_layout = np.full(np.shape(grid_layout), -1, dtype=object)
     counter = 0
+
+    # Left
+    for i in range(0, np.shape(grid_layout)[0]):
+        if grid_layout[i, 0]:
+            indexed_layout[i, 0] = counter
+            counter+=1
+
+    # Right
+    for i in range(0, np.shape(grid_layout)[0]):
+        if grid_layout[i, np.shape(grid_layout)[1]-1]:
+            indexed_layout[i, np.shape(grid_layout)[1]-1] = counter
+            counter+=1
+
+    # Interior
     for y, row in enumerate(grid_layout):
         for x, val in enumerate(row):
-            if val:
+            if val and indexed_layout[y, x] == -1:
                 indexed_layout[y,x] = counter
                 counter+=1
+
+    #print(indexed_layout)
 
     return indexed_layout
 
@@ -81,10 +99,12 @@ def get_coordinates(grid_layout):
 
 def compute_laplacian(indexed_layout, crosswires):
     # Gets coordiantes by checking which are not -1
+
     num_coordinates = int(np.sum(indexed_layout != -1))
 
     # Compute Laplacian Matrix
-    laplacian = np.zeros((num_coordinates, num_coordinates))
+    laplacian = sparse.lil_matrix((num_coordinates, num_coordinates))
+    #laplacian = np.zeros((num_coordinates, num_coordinates))
     for y, row in enumerate(indexed_layout):
         for x, val in enumerate(row):
             if val != -1:
@@ -106,6 +126,41 @@ def compute_laplacian(indexed_layout, crosswires):
 
     return laplacian
 
+def compute_harmonic_function(laplacian, b, level, c):
+    # BAD VARIABLE NAMES, NEEDS TO BE FIXED
+    num_boundary_points = c*b**level
+
+    print('laplacian shape', np.shape(laplacian))
+    s_n = sparse.csr_matrix(laplacian[num_boundary_points*2: , num_boundary_points*2:])
+    print('s_n', np.shape(s_n))
+    r_n = sparse.csr_matrix(laplacian[num_boundary_points*2: , :num_boundary_points*2])
+    print('r_n', np.shape(r_n))
+    u_n = np.zeros((2*num_boundary_points))
+    u_n[num_boundary_points:] = 1
+    print(u_n)
+    print('u_n', np.shape(u_n))
+    val = -r_n.dot(u_n)
+    print(np.shape(val))
+
+    w_n = la.spsolve(s_n, -r_n.dot(u_n))
+
+    w_n = np.concatenate((u_n, w_n), axis=0)
+    print(w_n)
+
+    return w_n
+
+def compute_energy(laplacian, u_n):
+    energy = 0
+
+    for y in range(np.shape(laplacian)[0]):
+        for x in range(np.shape(laplacian)[1]):
+            if laplacian[y, x] == 1:
+
+                energy += (u_n[y]-u_n[x])**2
+
+    return energy / 2
+
+
 def main():
     # Tries to make printing better (fails)
     np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
@@ -113,7 +168,7 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 2
+    level = 3
     crosswires = 1
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
@@ -131,12 +186,13 @@ def main():
 
     print('Computing \'laplacian\' ...')
     laplacian = compute_laplacian(indexed_layout, crosswires)
-    print(laplacian)
-    plt.imshow(laplacian)
-    plt.show()
+    #print(laplacian)
+    #plt.imshow(laplacian)
+    #plt.show()
 
-
-
+    u_n = compute_harmonic_function(laplacian, b, level, crosswires)
+    energy = compute_energy(laplacian, u_n)
+    print(1/energy)
 
 
 if __name__ == '__main__':
