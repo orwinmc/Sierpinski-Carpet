@@ -146,6 +146,7 @@ def compute_harmonic_function(laplacian, b, level, c):
 
     w_n = np.concatenate((u_n, w_n), axis=0)
     print(w_n)
+    #print(w_n*59364)
 
     return w_n
 
@@ -153,14 +154,25 @@ def compute_energy(laplacian, u_n):
     energy = 0
 
     for y in range(np.shape(laplacian)[0]):
-        #print(y)
         for x in range(np.shape(laplacian)[1]):
             if laplacian[y, x] == 1:
-
                 energy += (u_n[y]-u_n[x])**2
 
     return energy / 2
 
+def laid_out_harmonic(u_n, indexed_layout):
+    image = np.full(np.shape(indexed_layout), 0, dtype=float)
+    #print(image)
+    for y in range(np.shape(indexed_layout)[0]):
+        for x in range(np.shape(indexed_layout)[1]):
+            if indexed_layout[y, x] != -1:
+                image[y, x] = u_n[indexed_layout[y, x]]
+            else:
+                image[y, x] = None
+
+    #print(image)
+    plt.imshow(image)
+    plt.show()
 
 def main():
     # Tries to make printing better (fails)
@@ -169,8 +181,8 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 4
-    crosswires = 1
+    level = 2
+    crosswires = 4
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
     plt.imshow(grid_layout)
@@ -178,7 +190,7 @@ def main():
 
     print('Computing \'indexed_layout\' ...')
     indexed_layout = get_indexed_layout(grid_layout)
-    #plt.imshow(indexed_layout)
+    #print(indexed_layout)
 
     print('Computing \'coordinates\' ...')
     coordinates = get_coordinates(grid_layout)
@@ -188,12 +200,14 @@ def main():
     print('Computing \'laplacian\' ...')
     laplacian = compute_laplacian(indexed_layout, crosswires)
     #print(laplacian)
-    #plt.imshow(laplacian)
-    #plt.show()
+    plt.imshow(laplacian.todense())
+    plt.show()
 
     u_n = compute_harmonic_function(laplacian, b, level, crosswires)
     energy = compute_energy(laplacian, u_n)
     print(1/energy)
+
+    laid_out_harmonic(u_n, indexed_layout)
 
 
 if __name__ == '__main__':
