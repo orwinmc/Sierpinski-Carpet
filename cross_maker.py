@@ -151,11 +151,11 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 8
+    level = 4
 
     grid_layout = get_grid_layout(b, l, level)
-    #plt.imshow(grid_layout)
-    #plt.show()
+    plt.imshow(grid_layout)
+    plt.show()
 
     print('Computing \'indexed_layout\' ...')
     indexed_layout = get_indexed_layout(grid_layout)

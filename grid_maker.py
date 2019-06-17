@@ -35,11 +35,9 @@ def get_grid_layout(b, l, level, c):
         vertices_current = (c+1)*b**current_level + 1
         prev_vertices_current = (c+1)*b**(current_level-1) + 1
         hole_size = l*(c+1)*b**(current_level-1)-1
-        for i in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
-            for j in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
+        for i in range((b-l)//2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
+            for j in range((b-l)//2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
                 sc[i:i+hole_size, j:j+hole_size] = 0
-
-    #print(sc)
 
     return sc
 
@@ -89,11 +87,27 @@ def get_coordinates(grid_layout):
     num_coordinates = int(np.sum(grid_layout))
     coordinates = np.zeros((num_coordinates, 2), dtype=object)
     counter = 0
+
+    # Left
+    for i in range(0, np.shape(grid_layout)[0]):
+        if grid_layout[i, 0]:
+            coordinates[counter] = (i, 0)
+            counter+=1
+
+    # Right
+    for i in range(0, np.shape(grid_layout)[0]):
+        if grid_layout[i, np.shape(grid_layout)[1]-1]:
+            coordinates[counter] = (i, np.shape(grid_layout)[1]-1)
+            counter+=1
+
+    #interior
     for y, row in enumerate(grid_layout):
         for x, val in enumerate(row):
-            if val:
+            if val and x > 0 and x < np.shape(grid_layout)[1]-1:
                 coordinates[counter] = (y, x)
                 counter+=1
+
+    print(coordinates)
 
     return coordinates
 
@@ -170,8 +184,14 @@ def laid_out_harmonic(u_n, indexed_layout):
             else:
                 image[y, x] = None
 
+    X = range(np.shape(indexed_layout)[0])
+    Y = range(np.shape(indexed_layout)[0])
+    #H = image[Y, X]
+    print(X)
+    #print(H)
     #print(image)
-    plt.imshow(image)
+    #plt.imshow(image)
+    plt.contour(X, Y, image, levels=np.linspace(0,1,num=100))
     plt.show()
 
 def main():
@@ -181,8 +201,8 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 2
-    crosswires = 4
+    level = 3
+    crosswires = 7
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
     plt.imshow(grid_layout)
@@ -194,18 +214,29 @@ def main():
 
     print('Computing \'coordinates\' ...')
     coordinates = get_coordinates(grid_layout)
+    print(coordinates)
 
     print('Number of Vertices: %d' % (np.shape(coordinates)[0]))
 
     print('Computing \'laplacian\' ...')
     laplacian = compute_laplacian(indexed_layout, crosswires)
+    #pic_laplacian = laplacian.todense()
+    #pic_laplacian[pic_laplacian == 0] = np.nan
     #print(laplacian)
+    #plt.imshow(laplacian.todense())
+    #data_masked = np.ma.masked_where(data == -1, pic_laplacian)
     plt.imshow(laplacian.todense())
     plt.show()
 
     u_n = compute_harmonic_function(laplacian, b, level, crosswires)
-    energy = compute_energy(laplacian, u_n)
-    print(1/energy)
+    #print('Computing \'energy\' ...')
+    #energy = compute_energy(laplacian, u_n)
+    #print(1/energy)
+
+    with open('123.tsv', 'w') as fin:
+        fin.write('y\tx\tpotential\n')
+        for i, potential in enumerate(u_n):
+            fin.write('%f\t%f\t%f\n' % (coordinates[i][0], coordinates[i][1], potential))
 
     laid_out_harmonic(u_n, indexed_layout)
 
