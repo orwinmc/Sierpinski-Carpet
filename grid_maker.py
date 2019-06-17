@@ -227,7 +227,7 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 8
+    level = 6
     crosswires = 1
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
