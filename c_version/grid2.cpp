@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <omp.h>
 
 using namespace std;
 
@@ -44,7 +45,7 @@ void get_grid_layout(int b, int l, int level, int c, bool** grid_layout, int gri
 int main() {
     int b = 3;
     int l = 1;
-    int level = 5;
+    int level = 9;
     int c = 1;
 
     // Making Grid Layout
@@ -57,12 +58,18 @@ int main() {
     get_grid_layout(b, l, level, c, grid_layout, grid_size);
 
     // View
-    for (int y = 0; y<grid_size; y++) {
+    /*for (int y = 0; y<grid_size; y++) {
         for (int x = 0; x<grid_size; x++) {
             cout << grid_layout[y][x] << " ";
         }
         cout << endl;
+    }*/
+
+    #pragma omp parallel
+    for (int i = 0; i<9000000; i++) {
+        //cout << i << endl;
     }
+    cout << "DONE" << endl;
 
     // NEED TO FREE GRID LAYOUT
     return 0;

@@ -4,9 +4,7 @@ import sys # used to eliminate printing truncation
 from scipy import sparse
 import scipy.sparse.linalg as la
 
-
 # Constructs a 2D array of booleans, true = a given vertex is inside the SC
-
 def get_grid_layout(b, l, level, c):
     '''
         Generates a 2D array that looks something like this
@@ -113,9 +111,7 @@ def get_coordinates(grid_layout):
 
 def compute_laplacian(indexed_layout, crosswires):
     # Gets coordiantes by checking which are not -1
-
     num_coordinates = int(np.sum(indexed_layout != -1))
-
     # Compute Laplacian Matrix
     laplacian = sparse.lil_matrix((num_coordinates, num_coordinates))
     #laplacian = np.zeros((num_coordinates, num_coordinates))
@@ -159,20 +155,50 @@ def compute_harmonic_function(laplacian, b, level, c):
     w_n = la.spsolve(s_n, -r_n.dot(u_n))
 
     w_n = np.concatenate((u_n, w_n), axis=0)
-    print(w_n)
-    #print(w_n*59364)
+    #print(w_n)
 
     return w_n
 
-def compute_energy(laplacian, u_n):
+def compute_energy(indexed_layout, u_n, crosswires):
+    # Gets coordiantes by checking which are not -1
+    num_coordinates = int(np.sum(indexed_layout != -1))
     energy = 0
+    max = 0
+
+    for y, row in enumerate(indexed_layout):
+        for x, val in enumerate(row):
+            if val != -1:
+                if x > 0 and y % (crosswires+1) != 0 and indexed_layout[y, x-1] != -1:
+                    energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]])**2
+                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]]):
+                        max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]])
+                if y > 0 and x % (crosswires+1) != 0 and indexed_layout[y-1, x] != -1:
+                    energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]])**2
+                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]]):
+                        max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]])
+                if x < np.shape(indexed_layout)[1]-1 and y % (crosswires+1) != 0 and indexed_layout[y, x+1] != -1:
+                    energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]])**2
+                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]]):
+                        max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]])
+                if y < np.shape(indexed_layout)[0]-1 and x % (crosswires+1) != 0 and indexed_layout[y+1, x] != -1:
+                    energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]])**2
+                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]]):
+                        max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]])
+
+    return energy/2, max
+
+
+    '''energy = 0
+    max = 0
 
     for y in range(np.shape(laplacian)[0]):
         for x in range(np.shape(laplacian)[1]):
             if laplacian[y, x] == 1:
                 energy += (u_n[y]-u_n[x])**2
+                if abs(u_n[y]-u_n[x]) > max:
+                    max = abs(u_n[y]-u_n[x])
 
-    return energy / 2
+    return energy / 2, max'''
 
 def laid_out_harmonic(u_n, indexed_layout):
     image = np.full(np.shape(indexed_layout), 0, dtype=float)
@@ -187,7 +213,7 @@ def laid_out_harmonic(u_n, indexed_layout):
     X = range(np.shape(indexed_layout)[0])
     Y = range(np.shape(indexed_layout)[0])
     #H = image[Y, X]
-    print(X)
+    #print(X)
     #print(H)
     #print(image)
     #plt.imshow(image)
@@ -201,12 +227,12 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 3
-    crosswires = 7
+    level = 8
+    crosswires = 1
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
-    plt.imshow(grid_layout)
-    plt.show()
+    #plt.imshow(grid_layout)
+    #plt.show()
 
     print('Computing \'indexed_layout\' ...')
     indexed_layout = get_indexed_layout(grid_layout)
@@ -225,20 +251,20 @@ def main():
     #print(laplacian)
     #plt.imshow(laplacian.todense())
     #data_masked = np.ma.masked_where(data == -1, pic_laplacian)
-    plt.imshow(laplacian.todense())
-    plt.show()
+    #plt.imshow(laplacian.todense())
+    #plt.show()
 
     u_n = compute_harmonic_function(laplacian, b, level, crosswires)
     #print('Computing \'energy\' ...')
-    #energy = compute_energy(laplacian, u_n)
-    #print(1/energy)
+    energy, max = compute_energy(indexed_layout, u_n, crosswires)
+    print('energy',1/energy, max)
 
-    with open('123.tsv', 'w') as fin:
+    '''with open('123.tsv', 'w') as fin:
         fin.write('y\tx\tpotential\n')
         for i, potential in enumerate(u_n):
-            fin.write('%f\t%f\t%f\n' % (coordinates[i][0], coordinates[i][1], potential))
+            fin.write('%f\t%f\t%f\n' % (coordinates[i][0], coordinates[i][1], potential))'''
 
-    laid_out_harmonic(u_n, indexed_layout)
+    #laid_out_harmonic(u_n, indexed_layout)
 
 
 if __name__ == '__main__':
