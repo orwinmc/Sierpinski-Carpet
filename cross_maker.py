@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys # used to eliminate printing truncation
+from scipy.sparse import dok_matrix
+from scipy.sparse import csr_matrix
 
 
 # Constructs a 2D array of booleans, true = a given vertex is inside the SC
@@ -22,11 +24,11 @@ def get_grid_layout(b, l, level):
         vertices_current = 2*b**current_level + 1
         prev_vertices_current = 2*b**(current_level-1) + 1
         hole_size = l*2*b**(current_level-1)-1
-        for i in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
-            for j in range((b-l)/2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
+        for i in range((b-l)//2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
+            for j in range((b-l)//2*(prev_vertices_current-1)+1, num_vertices, vertices_current-1):
                 sc[i:i+hole_size, j:j+hole_size] = 0
 
-    print(sc)
+    #print(sc)
 
     '''for current_level in range(1, level+1):
         vertices_current = (c+1)*b**current_level + 1
@@ -54,11 +56,45 @@ def get_indexed_layout(grid_layout):
     '''
     indexed_layout = np.full(np.shape(grid_layout), -1, dtype=object)
     counter = 0
+
+    # Top
+    for i in range(np.shape(grid_layout)[1]-1):
+        indexed_layout[0, i] = counter
+        counter+=1
+
+    # Right
+    for i in range(0, np.shape(grid_layout)[0]-1):
+        indexed_layout[i, np.shape(grid_layout)[1]-1] = counter
+        counter+=1
+
+    # Bottom
+    for i in range(np.shape(grid_layout)[1]-1, 0, -1):
+        indexed_layout[np.shape(grid_layout)[0]-1, i] = counter
+        counter+=1
+
+    # Left
+    for i in range(np.shape(grid_layout)[0]-1, 0, -1):
+        indexed_layout[i, 0] = counter
+        counter+=1
+
+    # Left
+    '''for i in range(np.shape(grid_layout)[0]):
+        indexed_layout[i, 0] = counter
+        counter+=1
+
+    # Right
+    for i in range(np.shape(grid_layout)[0]):
+        indexed_layout[i, np.shape(grid_layout)[1]-1] = counter
+        counter+=1'''
+
+    # Interior
     for y, row in enumerate(grid_layout):
         for x, val in enumerate(row):
-            if val:
+            if val and indexed_layout[y, x] == -1:
                 indexed_layout[y,x] = counter
                 counter+=1
+
+    #print(indexed_layout)
 
     return indexed_layout
 
@@ -83,8 +119,10 @@ def compute_laplacian(indexed_layout):
     num_coordinates = int(np.sum(indexed_layout != -1))
 
     # Compute Laplacian Matrix
-    laplacian = np.zeros((num_coordinates, num_coordinates))
+    laplacian = dok_matrix((num_coordinates, num_coordinates))
+    #laplacian = np.zeros((num_coordinates, num_coordinates))
     for y, row in enumerate(indexed_layout):
+        print(y,np.shape(row))
         for x, val in enumerate(row):
             #print(x,y)
             if val != -1:
@@ -113,7 +151,7 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 7
+    level = 4
 
     grid_layout = get_grid_layout(b, l, level)
     plt.imshow(grid_layout)
@@ -128,9 +166,9 @@ def main():
 
     print('Computing \'laplacian\' ...')
     laplacian = compute_laplacian(indexed_layout)
-    print(laplacian)
-    #plt.imshow(laplacian)
-    #plt.show()
+    #print(laplacian)
+    plt.imshow(laplacian)
+    plt.show()
 
 
 
