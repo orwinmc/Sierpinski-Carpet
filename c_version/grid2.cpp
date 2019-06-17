@@ -14,6 +14,7 @@ void get_grid_layout(int b, int l, int level, int c, bool** grid_layout, int gri
         cout << "Invalid Input!" << endl;
     } else {
         // Fill Matrix Initially
+        #pragma omp parallel collapse(2)
         for (int y = 0; y<grid_size; y++) {
             for (int x = 0; x<grid_size; x++) {
                 if (x%(c+1) == 0 && y%(c+1) == 0) {
@@ -29,6 +30,7 @@ void get_grid_layout(int b, int l, int level, int c, bool** grid_layout, int gri
             int current_grid_size = get_grid_size(b, current_level, c);
             int prev_grid_size = get_grid_size(b, current_level-1, c);
             int hole_size = l*(prev_grid_size-1)-1;
+            #pragma omp parallel collapse(4)
             for (int j = (b-l)/2*(prev_grid_size-1)+1; j<grid_size; j+=(current_grid_size-1)) {
                 for (int i = (b-l)/2*(prev_grid_size-1)+1; i<grid_size; i+=(current_grid_size-1)) {
                     for (int y = 0; y<hole_size; y++) {
@@ -42,15 +44,29 @@ void get_grid_layout(int b, int l, int level, int c, bool** grid_layout, int gri
     }
 }
 
+void display_grid_layout(bool** grid_layout, int grid_size) {
+    for (int y = 0; y<grid_size; y++) {
+        for (int x = 0; x<grid_size; x++) {
+            if (grid_layout[y][x]) {
+                cout <<  "\u2588 ";
+            } else {
+                cout << "  ";
+            }
+
+        }
+        cout << endl;
+    }
+}
+
 int main() {
     int b = 3;
     int l = 1;
-    int level = 9;
+    int level = 3;
     int c = 1;
 
     // Making Grid Layout
     int grid_size = get_grid_size(b, level, c);
-    cout << grid_size << endl;
+    cout << "Grid Size: " << grid_size << endl;
     bool ** grid_layout = new bool*[grid_size];
     for (int i = 0; i<grid_size; i++) {
         grid_layout[i] = new bool[grid_size];
@@ -58,18 +74,8 @@ int main() {
     get_grid_layout(b, l, level, c, grid_layout, grid_size);
 
     // View
-    /*for (int y = 0; y<grid_size; y++) {
-        for (int x = 0; x<grid_size; x++) {
-            cout << grid_layout[y][x] << " ";
-        }
-        cout << endl;
-    }*/
+    display_grid_layout(grid_layout, grid_size);
 
-    #pragma omp parallel
-    for (int i = 0; i<9000000; i++) {
-        //cout << i << endl;
-    }
-    cout << "DONE" << endl;
 
     // NEED TO FREE GRID LAYOUT
     return 0;
