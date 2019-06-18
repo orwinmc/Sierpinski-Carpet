@@ -3,8 +3,8 @@
 #include <vector>
 
 // Eigen
-#include <Eigen/SparseCore>
-#include <Eigen/IterativeLinearSolvers>
+#include <Eigen/Eigen>
+//#include <Eigen/IterativeLinearSolvers>
 
 //#include <omp.h>
 
@@ -215,10 +215,13 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
     long num_coordinates = adjacency_list.size();
     int num_computed_points = potentials.rows();
     int num_boundary_points = num_coordinates-num_computed_points;
+    cout << num_boundary_points << endl;
+    cout << num_computed_points << endl;
 
-    Eigen::SparseMatrix<double> r(num_coordinates-num_boundary_points, num_boundary_points);
-    Eigen::SparseMatrix<double> a(num_coordinates-num_boundary_points, num_coordinates-num_boundary_points);
-
+    Eigen::SparseMatrix<double> r(num_computed_points, num_boundary_points);
+    cout << "asdf";
+    Eigen::SparseMatrix<double> a(num_computed_points, num_computed_points);
+    cout << "asdf";
     for (int i = 0; i<adjacency_list.size(); i++) {
         if (i >= num_boundary_points) {
             vector<long> row = adjacency_list[i];
@@ -240,7 +243,7 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
             }
         }
     }
-
+    cout << "asdf";
     //print_mtrx(a);
     //print_mtrx(r);
 
@@ -264,18 +267,25 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
     Eigen::SparseMatrix<double> x = cg.solve(b);
     print_mtrx(x);*/
 
-    Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double> > lscg;
-    lscg.compute(a);
-    Eigen::SparseMatrix<double> x = lscg.solve(b);
-    print_mtrx(x);
+    cout << "hi";
+    Eigen::Matrix<double, -1, 1> guess(num_computed_points);
+    for (int i = 0; i<num_computed_points; i++) {
+        guess[i] = 0.5;
+    }
+    cout << guess[4];
+
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > cg;
+    cg.compute(a);
+    Eigen::SparseMatrix<double> x = cg.solve(b);
+    //print_mtrx(x);
 }
 
 int main() {
     // Parameters
-    int b = 3;
-    int l = 1;
-    int level = 5;
-    int crosswires = 1;
+    const int b = 3;
+    const int l = 1;
+    const int level = 5;
+    const int crosswires = 1;
 
     // Making Grid Layout
     cout << "Making Grid Layout ..." << endl;
