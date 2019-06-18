@@ -2,6 +2,7 @@
 #include <cmath>
 #include <omp.h>
 #include <vector>
+#include <Eigen/Dense>
 
 using namespace std;
 
