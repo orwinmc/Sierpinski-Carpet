@@ -1,8 +1,12 @@
 #include <iostream>
 #include <cmath>
-#include <omp.h>
 #include <vector>
-#include <Eigen/Dense>
+
+// Eigen
+#include <Eigen/SparseCore>
+#include <Eigen/IterativeLinearSolvers>
+
+//#include <omp.h>
 
 using namespace std;
 
@@ -16,7 +20,7 @@ void get_grid_layout(int b, int l, int level, int c, long** grid_layout, int gri
         cout << "Invalid Input!" << endl;
     } else {
         // Fill Matrix Initially
-        #pragma omp parallel collapse(2)
+        //#pragma omp parallel collapse(2)
         for (int y = 0; y<grid_size; y++) {
             for (int x = 0; x<grid_size; x++) {
                 if (x%(c+1) == 0 && y%(c+1) == 0) {
@@ -32,7 +36,7 @@ void get_grid_layout(int b, int l, int level, int c, long** grid_layout, int gri
             int current_grid_size = get_grid_size(b, current_level, c);
             int prev_grid_size = get_grid_size(b, current_level-1, c);
             int hole_size = l*(prev_grid_size-1)-1;
-            #pragma omp parallel collapse(4)
+            //#pragma omp parallel collapse(4)
             for (int j = (b-l)/2*(prev_grid_size-1)+1; j<grid_size; j+=(current_grid_size-1)) {
                 for (int i = (b-l)/2*(prev_grid_size-1)+1; i<grid_size; i+=(current_grid_size-1)) {
                     for (int y = 0; y<hole_size; y++) {
@@ -70,9 +74,10 @@ void print_point(point p) {
 }
 
 // -3 is the offset (starts -3, -4, -5 and converts to 0, 1, 2, ...)
-void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vector<long>> & adjacency_list) {
+void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vector<long>> & adjacency_list, vector<point> & coordinates) {
     vector<point> stack;
     stack.push_back({0, 1});
+    coordinates.push_back({0, 1});
 
     grid_layout[0][1] = -3;
     long next_available_index = -4;
@@ -94,6 +99,7 @@ void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vec
                 } else {
                     if (grid_layout[p.y][p.x-1] == -2) {
                         grid_layout[p.y][p.x-1] = next_available_index;
+                        coordinates.push_back({p.y, p.x-1});
                         next_available_index--;
                     }
                     adj_row.push_back(-grid_layout[p.y][p.x-1]-3);
@@ -108,6 +114,7 @@ void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vec
                 } else {
                     if (grid_layout[p.y][p.x+1] == -2) {
                         grid_layout[p.y][p.x+1] = next_available_index;
+                        coordinates.push_back({p.y, p.x+1});
                         next_available_index--;
                     }
                     adj_row.push_back(-grid_layout[p.y][p.x+1]-3);
@@ -122,6 +129,7 @@ void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vec
                 } else {
                     if (grid_layout[p.y-1][p.x] == -2) {
                         grid_layout[p.y-1][p.x] = next_available_index;
+                        coordinates.push_back({p.y-1, p.x});
                         next_available_index--;
                     }
                     adj_row.push_back(-grid_layout[p.y-1][p.x]-3);
@@ -136,6 +144,7 @@ void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vec
                 } else {
                     if (grid_layout[p.y+1][p.x] == -2) {
                         grid_layout[p.y+1][p.x] = next_available_index;
+                        coordinates.push_back({p.y+1, p.x});
                         next_available_index--;
                     }
                     adj_row.push_back(-grid_layout[p.y+1][p.x]-3);
@@ -148,11 +157,33 @@ void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vec
     }
 }
 
+void get_laplacian(Eigen::SparseMatrix<short> & laplacian, vector< vector<long>> & adjacency_list) {
+    for (int i = 0; i<adjacency_list.size(); i++) {
+        vector<long> row = adjacency_list[i];
+        for (int j = 0; j<row.size(); j++) {
+            laplacian.coeffRef(i, row[j]) = 1;
+        }
+        laplacian.coeffRef(i, i) = -row.size();
+    }
+}
+
+void print_laplacian(Eigen::SparseMatrix<short> & laplacian) {
+    cout << "Laplacian Matrix: " << endl;
+    long num_coordinates = laplacian.cols();
+    for (int i = 0; i<laplacian.cols(); i++) {
+        for (int j = 0; j<num_coordinates; j++) {
+            cout << laplacian.coeff(i, j) << " ";
+        }
+        cout << endl;
+    }
+}
+
 int main() {
+    // Parameters
     int b = 5;
     int l = 3;
-    int level = 1;
-    int crosswires = 1;
+    int level = 0;
+    int crosswires = 3;
 
     // Making Grid Layout
     int grid_size = get_grid_size(b, level, crosswires);
@@ -163,21 +194,24 @@ int main() {
     }
     get_grid_layout(b, l, level, crosswires, grid_layout, grid_size);
 
-    // View
+    // View Grid Layout in Terminal
     display_grid_layout(grid_layout, grid_size);
 
     // Adjacency List Calculation
     vector< vector<long>> adjacency_list;
-    get_adj_list(grid_layout, grid_size, crosswires, adjacency_list);
+    vector<point> coordinates;
+    get_adj_list(grid_layout, grid_size, crosswires, adjacency_list, coordinates);
 
-    // View Adjacency List
-    for (int i = 0; i<adjacency_list.size(); i++) {
-        vector<long> row = adjacency_list[i];
-        for (int j = 0; j<row.size(); j++) {
-            cout << row[j] << " ";
-        }
-        cout << endl;
-    }
+    // Computes Laplacian
+    long num_coordinates = adjacency_list.size();
+    cout << "num_coordinates: " << num_coordinates << endl;
+    Eigen::SparseMatrix<short> laplacian(num_coordinates, num_coordinates);
+    get_laplacian(laplacian, adjacency_list);
+    print_laplacian(laplacian);
+
+    //laplacian.insert(0, 0) = 3;
+    //cout << laplacian.coeff(1, 0) << endl;
+    //get_laplacian(laplacian, adjacency_list);
 
 
     // NEED TO FREE GRID LAYOUT
