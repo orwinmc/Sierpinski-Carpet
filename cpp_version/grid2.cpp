@@ -74,13 +74,31 @@ void print_point(point p) {
 }
 
 // -3 is the offset (starts -3, -4, -5 and converts to 0, 1, 2, ...)
+// Needs to be confirmed
 void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vector<long>> & adjacency_list, vector<point> & coordinates) {
-    vector<point> stack;
-    stack.push_back({0, 1});
-    coordinates.push_back({0, 1});
+    long next_available_index = -3;
 
-    grid_layout[0][1] = -3;
-    long next_available_index = -4;
+    // Left Boundary Assignment
+    for (int y = 0; y<grid_size; y++) {
+        if (grid_layout[y][0] == -2) {
+            grid_layout[y][0] = next_available_index;
+            coordinates.push_back({y, 0});
+            next_available_index--;
+        }
+    }
+
+    // Right Boundary Assignment
+    for (int y = 0; y<grid_size; y++) {
+        if (grid_layout[y][grid_size-1] == -2) {
+            grid_layout[y][grid_size-1] = next_available_index;
+            coordinates.push_back({y, grid_size-1});
+            next_available_index--;
+        }
+    }
+
+    // Beginning of Flood Fill Algorithm
+    vector<point> stack;
+    stack.push_back({1, 0});
 
     while (stack.size() > 0) {
 
@@ -152,7 +170,11 @@ void get_adj_list(long** grid_layout, int grid_size, int crosswires, vector< vec
                 }
             }
 
-            adjacency_list.push_back(adj_row);
+            while (adjacency_list.size() <= grid_layout[p.y][p.x]) {
+                vector<long> blank_row;
+                adjacency_list.push_back(blank_row);
+            }
+            adjacency_list[grid_layout[p.y][p.x]] = adj_row;
         }
     }
 }
@@ -178,12 +200,16 @@ void print_laplacian(Eigen::SparseMatrix<short> & laplacian) {
     }
 }
 
+void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<long>> & adjacency_list) {
+
+}
+
 int main() {
     // Parameters
     int b = 5;
     int l = 3;
-    int level = 0;
-    int crosswires = 3;
+    int level = 1;
+    int crosswires = 1;
 
     // Making Grid Layout
     int grid_size = get_grid_size(b, level, crosswires);
@@ -201,13 +227,22 @@ int main() {
     vector< vector<long>> adjacency_list;
     vector<point> coordinates;
     get_adj_list(grid_layout, grid_size, crosswires, adjacency_list, coordinates);
+    /*for (int i = 0; i<coordinates.size(); i++) {
+        print_point(coordinates[i]);
+        cout << " ";
+    }*/
 
     // Computes Laplacian
     long num_coordinates = adjacency_list.size();
     cout << "num_coordinates: " << num_coordinates << endl;
     Eigen::SparseMatrix<short> laplacian(num_coordinates, num_coordinates);
     get_laplacian(laplacian, adjacency_list);
-    print_laplacian(laplacian);
+
+    // computes potentials
+    int num_boundary_points = crosswires*pow(b,level);
+    Eigen::SparseMatrix<double> potentials(num_coordinates-2*num_boundary_points, 1);
+    find_potentials(potentials, adjacency_list);
+    //print_laplacian(laplacian);
 
     //laplacian.insert(0, 0) = 3;
     //cout << laplacian.coeff(1, 0) << endl;
