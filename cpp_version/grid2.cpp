@@ -192,7 +192,7 @@ void get_laplacian(Eigen::SparseMatrix<short> & laplacian, vector< vector<long>>
 void print_laplacian(Eigen::SparseMatrix<short> & laplacian) {
     cout << "Laplacian Matrix: " << endl;
     long num_coordinates = laplacian.cols();
-    for (int i = 0; i<laplacian.cols(); i++) {
+    for (int i = 0; i<num_coordinates; i++) {
         for (int j = 0; j<num_coordinates; j++) {
             cout << laplacian.coeff(i, j) << " ";
         }
@@ -200,18 +200,85 @@ void print_laplacian(Eigen::SparseMatrix<short> & laplacian) {
     }
 }
 
-void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<long>> & adjacency_list) {
+void print_mtrx(Eigen::SparseMatrix<double> & mtrx) {
+    cout << "Matrix: " << endl;
+    long num_coordinates = mtrx.cols();
+    for (int i = 0; i<mtrx.rows(); i++) {
+        for (int j = 0; j<mtrx.cols(); j++) {
+            cout << mtrx.coeff(i, j) << " ";
+        }
+        cout << endl;
+    }
+}
 
+void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<long>> & adjacency_list) {
+    long num_coordinates = adjacency_list.size();
+    int num_computed_points = potentials.rows();
+    int num_boundary_points = num_coordinates-num_computed_points;
+
+    Eigen::SparseMatrix<double> r(num_coordinates-num_boundary_points, num_boundary_points);
+    Eigen::SparseMatrix<double> a(num_coordinates-num_boundary_points, num_coordinates-num_boundary_points);
+
+    for (int i = 0; i<adjacency_list.size(); i++) {
+        if (i >= num_boundary_points) {
+            vector<long> row = adjacency_list[i];
+
+            // Adds elements not on diagonal
+            for (int j = 0; j<row.size(); j++) {
+                if (row[j] < num_boundary_points) {
+                    r.coeffRef(i-num_boundary_points, row[j]) = 1;
+                } else {
+                    a.coeffRef(i-num_boundary_points, row[j]-num_boundary_points) = 1;
+                }
+            }
+
+            // Add elements on the diagonal
+            if (i < num_boundary_points) {
+                r.coeffRef(i-num_boundary_points, i) = -(double)row.size();
+            } else {
+                a.coeffRef(i-num_boundary_points, i-num_boundary_points) = -(double)row.size();
+            }
+        }
+    }
+
+    //print_mtrx(a);
+    //print_mtrx(r);
+
+    Eigen::SparseMatrix<double> dirichlet(num_boundary_points, 1);
+    for (int i = 0; i<num_boundary_points; i++) {
+        if (i < num_boundary_points / 2) {
+            dirichlet.coeffRef(i, 0) = 0;
+        } else {
+            dirichlet.coeffRef(i, 0) = 1;
+        }
+    }
+
+    Eigen::SparseMatrix<double> b = -r*dirichlet;
+    //print_mtrx(b);
+
+    /*Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > cg;
+    cg.compute(a);
+    //cg.setMaxIterations(10);
+
+
+    Eigen::SparseMatrix<double> x = cg.solve(b);
+    print_mtrx(x);*/
+
+    Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double> > lscg;
+    lscg.compute(a);
+    Eigen::SparseMatrix<double> x = lscg.solve(b);
+    print_mtrx(x);
 }
 
 int main() {
     // Parameters
-    int b = 5;
-    int l = 3;
-    int level = 1;
+    int b = 3;
+    int l = 1;
+    int level = 5;
     int crosswires = 1;
 
     // Making Grid Layout
+    cout << "Making Grid Layout ..." << endl;
     int grid_size = get_grid_size(b, level, crosswires);
     cout << "Grid Size: " << grid_size << endl;
     long ** grid_layout = new long*[grid_size];
@@ -221,9 +288,10 @@ int main() {
     get_grid_layout(b, l, level, crosswires, grid_layout, grid_size);
 
     // View Grid Layout in Terminal
-    display_grid_layout(grid_layout, grid_size);
+    //display_grid_layout(grid_layout, grid_size);
 
     // Adjacency List Calculation
+    cout << "Making Adjacency List ..." << endl;
     vector< vector<long>> adjacency_list;
     vector<point> coordinates;
     get_adj_list(grid_layout, grid_size, crosswires, adjacency_list, coordinates);
@@ -235,12 +303,13 @@ int main() {
     // Computes Laplacian
     long num_coordinates = adjacency_list.size();
     cout << "num_coordinates: " << num_coordinates << endl;
-    Eigen::SparseMatrix<short> laplacian(num_coordinates, num_coordinates);
-    get_laplacian(laplacian, adjacency_list);
+    //Eigen::SparseMatrix<short> laplacian(num_coordinates, num_coordinates);
+    //get_laplacian(laplacian, adjacency_list);
 
-    // computes potentials
-    int num_boundary_points = crosswires*pow(b,level);
-    Eigen::SparseMatrix<double> potentials(num_coordinates-2*num_boundary_points, 1);
+    // Computes Potentials
+    cout << "Compute Potentials ..." << endl;
+    int num_boundary_points = 2*crosswires*pow(b,level);
+    Eigen::SparseMatrix<double> potentials(num_coordinates-num_boundary_points, 1);
     find_potentials(potentials, adjacency_list);
     //print_laplacian(laplacian);
 
