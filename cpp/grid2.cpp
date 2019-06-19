@@ -338,7 +338,7 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
     find_potentials(potentials, adjacency_list);
 
     // Output to file
-    ofstream fout(filename);
+    /*ofstream fout(filename);
 
     time_t now = time(0);
     string dt = ctime(&now);
@@ -358,19 +358,22 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
             fout << coordinates[i].y << "\t" << coordinates[i].x << "\t" << potentials.coeff(i-num_boundary_points, 0) << endl;
         }
     }
-    fout.close();
+    fout.close();*/
     return 0;
 }
 
 int main() {
-    int b = 4;
-    int l = 2;
+    int b = 3;
+    int l = 1;
+    int level = 8;
     int crosswires = 1;
-    for (int level = 0; level<8; level++) {
+    /*for (int level = 0; level<8; level++) {
         cout << "----------------------\n";
         string filename = "../data/plus/plusdata_"+to_string(b)+"_"+to_string(l)+"_"+to_string(crosswires)+"_level"+to_string(level)+".dat";
         //cout << filename;
         harmonic_function(b, l, level, crosswires, filename);
-    }
+    }*/
+
+    harmonic_function(b, l, level, crosswires, "asdf");
 
 }
