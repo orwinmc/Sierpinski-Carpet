@@ -1,12 +1,15 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
+#include <ctime>
 #include <vector>
+#include <string>
 
-// Eigen
-#include <Eigen/Eigen>
-//#include <Eigen/IterativeLinearSolvers>
+#include <sys/resource.h> /* give extra space to stack `rlimit` */
 
-//#include <omp.h>
+#include <Eigen/Eigen> /* Sparse Matrices */
+
+#include <omp.h> /* Parallel */
 
 using namespace std;
 
@@ -20,7 +23,6 @@ void get_grid_layout(int b, int l, int level, int c, long** grid_layout, int gri
         cout << "Invalid Input!" << endl;
     } else {
         // Fill Matrix Initially
-        //#pragma omp parallel collapse(2)
         for (int y = 0; y<grid_size; y++) {
             for (int x = 0; x<grid_size; x++) {
                 if (x%(c+1) == 0 && y%(c+1) == 0) {
@@ -212,16 +214,25 @@ void print_mtrx(Eigen::SparseMatrix<double> & mtrx) {
 }
 
 void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<long>> & adjacency_list) {
+    /*struct rlimit lim;
+    getrlimit(RLIMIT_STACK, &lim);
+    cout << lim.rlim_cur << endl;*/
+
     long num_coordinates = adjacency_list.size();
     int num_computed_points = potentials.rows();
     int num_boundary_points = num_coordinates-num_computed_points;
-    cout << num_boundary_points << endl;
-    cout << num_computed_points << endl;
+    cout << "Total Boundary Points: " << num_boundary_points << endl;
+    cout << "Computed Points: " << num_computed_points << endl;
 
+    cout << "1) Initailizing Matrices ..." << endl;
     Eigen::SparseMatrix<double> r(num_computed_points, num_boundary_points);
-    cout << "asdf";
     Eigen::SparseMatrix<double> a(num_computed_points, num_computed_points);
-    cout << "asdf";
+
+    cout << "2) Reserving Space ..." << endl;
+    r.reserve(Eigen::VectorXi::Constant(num_boundary_points, 5));
+    a.reserve(Eigen::VectorXi::Constant(num_computed_points, 5));
+
+    cout << "3) Inserting Elements ..." << endl;
     for (int i = 0; i<adjacency_list.size(); i++) {
         if (i >= num_boundary_points) {
             vector<long> row = adjacency_list[i];
@@ -229,24 +240,24 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
             // Adds elements not on diagonal
             for (int j = 0; j<row.size(); j++) {
                 if (row[j] < num_boundary_points) {
-                    r.coeffRef(i-num_boundary_points, row[j]) = 1;
+                    r.insert(i-num_boundary_points, row[j]) = 1;
                 } else {
-                    a.coeffRef(i-num_boundary_points, row[j]-num_boundary_points) = 1;
+                    a.insert(i-num_boundary_points, row[j]-num_boundary_points) = 1;
                 }
             }
 
             // Add elements on the diagonal
             if (i < num_boundary_points) {
-                r.coeffRef(i-num_boundary_points, i) = -(double)row.size();
+                r.insert(i-num_boundary_points, i) = -(double)row.size();
             } else {
-                a.coeffRef(i-num_boundary_points, i-num_boundary_points) = -(double)row.size();
+                a.insert(i-num_boundary_points, i-num_boundary_points) = -(double)row.size();
             }
         }
     }
-    cout << "asdf";
     //print_mtrx(a);
     //print_mtrx(r);
 
+    cout << "4) Setting Boundary Conditions ..." << endl;
     Eigen::SparseMatrix<double> dirichlet(num_boundary_points, 1);
     for (int i = 0; i<num_boundary_points; i++) {
         if (i < num_boundary_points / 2) {
@@ -256,36 +267,37 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
         }
     }
 
+    cout << "5) Solving ..." << endl;
     Eigen::SparseMatrix<double> b = -r*dirichlet;
-    //print_mtrx(b);
-
-    /*Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > cg;
-    cg.compute(a);
-    //cg.setMaxIterations(10);
-
-
-    Eigen::SparseMatrix<double> x = cg.solve(b);
-    print_mtrx(x);*/
-
-    cout << "hi";
-    Eigen::Matrix<double, -1, 1> guess(num_computed_points);
+    Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+    solver.analyzePattern(a);
+    solver.factorize(a);
+    //solver.setMaxIterations(1000);
+    //solver.setTolerance(0.001);
+    /*Eigen::Matrix<double, -1, 1> guess(num_computed_points);
     for (int i = 0; i<num_computed_points; i++) {
         guess[i] = 0.5;
-    }
-    cout << guess[4];
-
-    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > cg;
-    cg.compute(a);
-    Eigen::SparseMatrix<double> x = cg.solve(b);
+    }*/
+    //Eigen::SparseMatrix<double> x = lscg.solveWithGuess(b, guess);
+    //Eigen::VectorXd x(num_computed_points);
+    potentials = solver.solve(b);
     //print_mtrx(x);
 }
 
-int main() {
+int harmonic_function(int b, int l, int level, int crosswires, string filename) {
+    /*struct rlimit lim;
+    getrlimit(RLIMIT_STACK, &lim);
+    cout << lim.rlim_cur << endl;
+
+    const rlimit stack_size = {16*1024*1024, 16*1024*1024};
+    if (setrlimit(RLIMIT_STACK, &stack_size) == -1) {
+        return 1;
+    }*/
     // Parameters
-    const int b = 3;
+    /*const int b = 3;
     const int l = 1;
-    const int level = 5;
-    const int crosswires = 1;
+    const int level = 1;
+    const int crosswires = 1;*/
 
     // Making Grid Layout
     cout << "Making Grid Layout ..." << endl;
@@ -305,10 +317,12 @@ int main() {
     vector< vector<long>> adjacency_list;
     vector<point> coordinates;
     get_adj_list(grid_layout, grid_size, crosswires, adjacency_list, coordinates);
-    /*for (int i = 0; i<coordinates.size(); i++) {
-        print_point(coordinates[i]);
-        cout << " ";
-    }*/
+
+    // FREE GRID LAYOUT
+    for(int i =0 ; i<grid_size; i++) {
+        delete[] grid_layout[i];
+    }
+    delete[] grid_layout;
 
     // Computes Laplacian
     long num_coordinates = adjacency_list.size();
@@ -319,15 +333,44 @@ int main() {
     // Computes Potentials
     cout << "Compute Potentials ..." << endl;
     int num_boundary_points = 2*crosswires*pow(b,level);
-    Eigen::SparseMatrix<double> potentials(num_coordinates-num_boundary_points, 1);
+    int num_computed_points = num_coordinates-num_boundary_points;
+    Eigen::SparseMatrix<double> potentials(num_computed_points, 1);
     find_potentials(potentials, adjacency_list);
-    //print_laplacian(laplacian);
 
-    //laplacian.insert(0, 0) = 3;
-    //cout << laplacian.coeff(1, 0) << endl;
-    //get_laplacian(laplacian, adjacency_list);
+    // Output to file
+    ofstream fout(filename);
 
-
-    // NEED TO FREE GRID LAYOUT
+    time_t now = time(0);
+    string dt = ctime(&now);
+    fout << "Produced by \"The Resistance\", " << dt;
+    fout << "---------------------------------------------------------" << endl;
+    fout << "Parameters: b = " << b << ", l = " << l << ", level = " << level << ", crosswires = " << crosswires << endl;
+    fout << "---------------------------------------------------------" << endl;
+    fout << "y\tx\tpotential" << endl;
+    for (int i = 0; i<num_coordinates; i++) {
+        if (i < num_boundary_points) {
+            if (i < num_boundary_points/2) {
+                fout << coordinates[i].y << "\t" << coordinates[i].x << "\t" << 0 << endl;
+            } else {
+                fout << coordinates[i].y << "\t" << coordinates[i].x << "\t" << 1 << endl;
+            }
+        } else {
+            fout << coordinates[i].y << "\t" << coordinates[i].x << "\t" << potentials.coeff(i-num_boundary_points, 0) << endl;
+        }
+    }
+    fout.close();
     return 0;
+}
+
+int main() {
+    int b = 4;
+    int l = 2;
+    int crosswires = 1;
+    for (int level = 0; level<8; level++) {
+        cout << "----------------------\n";
+        string filename = "../data/plus/plusdata_"+to_string(b)+"_"+to_string(l)+"_"+to_string(crosswires)+"_level"+to_string(level)+".dat";
+        //cout << filename;
+        harmonic_function(b, l, level, crosswires, filename);
+    }
+
 }

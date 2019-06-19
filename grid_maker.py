@@ -164,28 +164,43 @@ def compute_energy(indexed_layout, u_n, crosswires):
     num_coordinates = int(np.sum(indexed_layout != -1))
     energy = 0
     max = 0
+    max_start = (-1, -1)
+    max_end = (-1, -1)
 
     for y, row in enumerate(indexed_layout):
         for x, val in enumerate(row):
             if val != -1:
                 if x > 0 and y % (crosswires+1) != 0 and indexed_layout[y, x-1] != -1:
                     energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]])**2
-                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]]):
+                    if abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]])-max > 0.0000000001:
                         max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x-1]])
+                        max_start = y, x-1
+                        max_end = y, x
+                        print(max)
                 if y > 0 and x % (crosswires+1) != 0 and indexed_layout[y-1, x] != -1:
                     energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]])**2
-                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]]):
+                    if abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]])-max > 0.0000000001:
                         max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y-1, x]])
+                        max_start = y-1, x
+                        max_end = y, x
+                        print(max)
                 if x < np.shape(indexed_layout)[1]-1 and y % (crosswires+1) != 0 and indexed_layout[y, x+1] != -1:
                     energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]])**2
-                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]]):
+                    if abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]])-max > 0.0000000001:
                         max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y, x+1]])
+                        max_start = y, x
+                        max_end = y, x+1
+                        print(max)
                 if y < np.shape(indexed_layout)[0]-1 and x % (crosswires+1) != 0 and indexed_layout[y+1, x] != -1:
                     energy += (u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]])**2
-                    if max < abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]]):
+                    if abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]])-max > 0.0000000001:
                         max = abs(u_n[indexed_layout[y, x]]-u_n[indexed_layout[y+1, x]])
+                        max_start = y, x
+                        max_end = y+1, x
+                        print(max)
 
-    return energy/2, max
+
+    return energy/2, max, max_start, max_end
 
 
     '''energy = 0
@@ -227,12 +242,12 @@ def main():
     # Input Values
     b = 3
     l = 1
-    level = 6
+    level = 7
     crosswires = 1
 
     grid_layout = get_grid_layout(b, l, level, crosswires)
-    #plt.imshow(grid_layout)
-    #plt.show()
+    plt.imshow(grid_layout)
+    plt.show()
 
     print('Computing \'indexed_layout\' ...')
     indexed_layout = get_indexed_layout(grid_layout)
@@ -256,8 +271,11 @@ def main():
 
     u_n = compute_harmonic_function(laplacian, b, level, crosswires)
     #print('Computing \'energy\' ...')
-    energy, max = compute_energy(indexed_layout, u_n, crosswires)
-    print('energy',1/energy, max)
+    energy, max, max_start, max_end = compute_energy(indexed_layout, u_n, crosswires)
+    normalized_max_start = (float(max_start[0]) / np.shape(grid_layout)[0], float(max_start[1]) / np.shape(grid_layout)[0])
+    normalized_max_end = (float(max_end[0]) / np.shape(grid_layout)[0], float(max_end[1]) / np.shape(grid_layout)[0])
+    print('energy',1/energy, max, normalized_max_start, normalized_max_end)
+    print(max_start, max_end)
 
     '''with open('123.tsv', 'w') as fin:
         fin.write('y\tx\tpotential\n')
