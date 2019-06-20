@@ -30,7 +30,8 @@ def display_grid_layout(layout, display_type='grid'):
 
 def display_harmonic_function(potentials, coordinates, grid_size, display_type='grid', num_contours=200):
     ''' For viewing the harmonic functions computed. Two options are available
-    ("grid" and "contour") '''
+    ("grid" and "contour").  The harmonic function np array is returned (for
+    convenience) '''
 
     harmonic_function = np.full((grid_size, grid_size), None, dtype=float)
 
@@ -43,6 +44,7 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
     if display_type == 'grid':
         plt.imshow(harmonic_function)
         plt.show()
+
     elif display_type == 'contour':
         ys = range(grid_size)
         xs = range(grid_size)
@@ -53,6 +55,8 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
 
         plt.contour(ys, xs, harmonic_function, levels=np.linspace(0, 1, num=num_contours))
         plt.show()
+
+    return harmonic_function
 
 def index_layout(layout):
     ''' Enumerates the layout of the given fractal.  At each location a -2 is
@@ -121,3 +125,36 @@ def compute_laplacian(adjacency_list):
         laplacian[i, i] = -neighbors
 
     return laplacian
+
+def max_edges(adjacency_list, potentials, coordinates, grid_size):
+    ''' Finds the maximum edges in a given fractal (based on the associated
+    adjacency matrix).  Returns the coordinates of these edges in a list
+    (Should probably just return the indices based on coordinates****)'''
+
+    max_diff = 0
+    max_edges = []
+
+    for i, row in enumerate(adjacency_list):
+        for index in row:
+            if i < index:
+                min_potential_index = -1
+                max_potential_index = -1
+
+                # To ensure first element in edge is lower potential
+                if potentials[index] < potentials[i]:
+                    min_potential_index = index
+                    max_potential_index = i
+                else:
+                    min_potential_index = i
+                    max_potential_index = index
+
+                diff = abs(potentials[i]-potentials[index])
+
+                if abs(diff-max_diff) <= 0.0000001:
+                    max_edges.append((coordinates[min_potential_index], coordinates[max_potential_index]))
+                elif diff - max_diff > 0.0000001:
+                    max_diff = diff
+                    max_edges = [(coordinates[min_potential_index], coordinates[max_potential_index])]
+
+
+    return np.array(max_edges)

@@ -148,6 +148,8 @@ def main():
     potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
 
     shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    print(max_edges)
 
 
 if __name__ == '__main__':
