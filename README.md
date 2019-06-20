@@ -1,9 +1,12 @@
 # Sierpinski-Carpet
-UCONN Math REU - Sierpinski Carpet Project
+UCONN Math REU - Sierpinski Carpet Project ([Project Link](https://mathreu.uconn.edu/projects/fractals/))
+![Visual for Level 3 Plus Graph Approximation](imgs/plus31-level3-carpet.png)
 
-# Usage for Plus Graph Approximation
-Currently one can choose b, l, level, and crosswires in `grid_maker.py`
+# Python Version
 
-To run, simply type `grid_maker.py`
+- In order to use the python version, simply execute `plus.py` or `cross.py`
+- For usage information use option `-h`
 
-# Usage for Cross Graph Approximation (TBD)
+# CPP Version
+
+- Run `make` in the `cpp` folder and execute `./grid2`
