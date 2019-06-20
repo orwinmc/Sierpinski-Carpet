@@ -42,7 +42,7 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
 
     # Selection of display option
     if display_type == 'grid':
-        plt.imshow(harmonic_function)
+        plt.imshow(harmonic_function, vmin=0, vmax=1)
         plt.colorbar()
         plt.show()
 

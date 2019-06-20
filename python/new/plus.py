@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 import scipy.sparse.linalg as la
+import scipy.interpolate as interpolate
 
 # Shared functions
 import shared
@@ -121,6 +122,8 @@ def compute_harmonic_function(laplacian, b, crosswires, level):
 
     return potentials
 
+## HERE IS WHERE INTERPOLATION BEGINS (NEEDS TO BE CONFIRMED AND CLEANED UP)
+
 def get_max_subcell(harmonic_function, b, crosswires, level, subcoordinate, sublevel=1):
     ''' Given a subcoordinate for a given sublevel, place the subcell into a
     new np array and return the cell (e.g. if the sublevel is level-1 there is a
@@ -141,6 +144,94 @@ def get_max_subcell(harmonic_function, b, crosswires, level, subcoordinate, subl
         plt.show()
 
         return subcell
+
+def generate_interpolation(cell, b, c, interpolation_level, interpolation_layout):
+    points = []
+    potentials = []
+
+    cell_size = np.shape(cell)[0]
+
+    # Top Left Corner
+    cell[0, 0] = cell[1, 0] + (cell[0, 1]-cell[1, 1])
+
+    # Top Right Corner
+    cell[0, cell_size-1] = cell[1, cell_size-1] + (cell[0, cell_size-2]-cell[1, cell_size-2])
+
+    # Bottom Left Corner
+    cell[cell_size-1, 0] = cell[cell_size-2, 0] + (cell[cell_size-1, 1]-cell[cell_size-2, 1])
+
+    # Bottom Right Corner
+    cell[cell_size-1, cell_size-1] = cell[cell_size-2, cell_size-1] + (cell[cell_size-1, cell_size-2]-cell[cell_size-2, cell_size-2])
+
+    for y, row in enumerate(cell):
+        for x, potential in enumerate(row):
+            if not np.isnan(potential):
+                points.append((y,x))
+                potentials.append(potential)
+
+    f = interpolate.LinearNDInterpolator(np.array(points), np.array(potentials), fill_value=-1)
+
+    interpolation_grid_size = get_grid_size(b, c, interpolation_level)
+
+    # Testing
+    table = np.full((interpolation_grid_size, interpolation_grid_size), -1, dtype=float)
+    for i, y in enumerate(np.linspace(0, cell_size-1, num=interpolation_grid_size)):
+        for j, x in enumerate(np.linspace(0, cell_size-1, num=interpolation_grid_size)):
+            table[i, j] = f(y, x)
+
+    plt.imshow(table, vmin=0, vmax=1)
+    plt.show()
+
+    dirichlet = []
+
+    # Left Edge
+    for i, y in enumerate(np.linspace(0, cell_size-1, num=interpolation_grid_size)):
+        if interpolation_layout[i, 0] != -1:
+            #print((i, 0))
+            dirichlet.append(f(y, 0))
+
+    # Bottom Edge
+    for j, x in enumerate(np.linspace(0, cell_size-1, num=interpolation_grid_size)):
+        if interpolation_layout[interpolation_grid_size-1, j] != -1:
+            #print((interpolation_grid_size-1, j))
+            dirichlet.append(f(cell_size-1, x))
+
+    # Right Edge
+    for i, y in enumerate(np.linspace(0, cell_size-1, num=interpolation_grid_size)):
+        if interpolation_layout[i, interpolation_grid_size-1] != -1:
+            #print((i, interpolation_grid_size-1))
+            dirichlet.append(f(y, cell_size-1))
+
+    # Top Edge
+    for  j, x in enumerate(np.linspace(0, cell_size-1, num=interpolation_grid_size)):
+        if interpolation_layout[0, j] != -1:
+            #print((0, j))
+            dirichlet.append(f(0, x))
+
+    #print(dirichlet)
+    return np.array(dirichlet)
+
+def compute_interpolation_harmonic_function(interpolation_laplacian, b, crosswires, interpolation_level, dirichlet):
+    print('Computing Interpolation Harmonic Function Potentials ...')
+
+    num_coordinates = np.shape(interpolation_laplacian)[0]
+    num_boundary_points = crosswires*b**interpolation_level
+    print(num_boundary_points)
+
+    a = sparse.csr_matrix(interpolation_laplacian[4*num_boundary_points:, 4*num_boundary_points:])
+    r = sparse.csr_matrix(interpolation_laplacian[4*num_boundary_points:, :4*num_boundary_points])
+    b = -r.dot(dirichlet)
+
+    # Uses a linear algebra solver to compute harmonic function potentials
+    interpolation_potentials = la.spsolve(a, b)
+
+    # Add in boundary conditions for full harmonic function
+    interpolation_potentials = np.insert(interpolation_potentials, 0, dirichlet)
+    #print(interpolation_potentials)
+
+    return interpolation_potentials
+
+
 
 def main():
     # Make printing a bit nicer for visualizing
@@ -168,15 +259,45 @@ def main():
     laplacian = shared.compute_laplacian(adjacency_list)
     potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
 
+
+    ## INTERPOLATION PORTION
+    print('------------------------------------------------')
+    print('Beginning Interpolation of cell for ...')
+    interpolation_level = 4
     # Finding maximum edge
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
     max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #print(max_edges)
 
     # Fetching max_cell
-    sublevel = 2
+    sublevel = 1
     subcell_size = get_grid_size(args.b, args.crosswires, sublevel)
     subcoordinate = (max_edges[0,0,0]//(subcell_size-1), max_edges[0,0,1]//(subcell_size-1))
-    get_max_subcell(harmonic_function, args.b, args.crosswires, args.level, subcoordinate, sublevel=sublevel)
+    #print(subcoordinate)
+    cell = get_max_subcell(harmonic_function, args.b, args.crosswires, args.level, subcoordinate, sublevel=sublevel)
+    #generate_interpolation(cell, args.b, args.crosswires, interpolation_level)
+
+    # Begin Computation of Harmonic Function
+
+    interpolation_grid_size = get_grid_size(args.b, args.crosswires, interpolation_level)
+    interpolation_layout = get_grid_layout(args.b, args.l, args.crosswires, interpolation_level)
+
+    # Visualization of Fractal
+    shared.display_grid_layout(interpolation_layout, display_type='matplotlib')
+
+    # Possibly need to clear some memory, insert `del layout` at some point
+    interpolation_coordinates = shared.index_layout(interpolation_layout)
+    interpolation_adjacency_list = get_adjacency_list(interpolation_layout, interpolation_coordinates, args.crosswires)
+    interpolation_laplacian = shared.compute_laplacian(interpolation_adjacency_list)
+    dirichlet = generate_interpolation(cell, args.b, args.crosswires, interpolation_level, interpolation_layout)
+    interpolation_potentials = compute_interpolation_harmonic_function(interpolation_laplacian, args.b, args.crosswires, interpolation_level, dirichlet)
+    interpolation_harmonic_function = shared.display_harmonic_function(interpolation_potentials, interpolation_coordinates, interpolation_grid_size, display_type='grid')
+    '''potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)'''
+
+
+    ## COMPARE DIFFERENCES
+    
+
 
 
 if __name__ == '__main__':
