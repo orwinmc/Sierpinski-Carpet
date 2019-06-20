@@ -85,7 +85,7 @@ def get_max_cell(harmonic_layout, left, b, level, crosswires):
 
     cell = harmonic_layout[top_left_corner[0]:top_left_corner[0]+cell_size, top_left_corner[1]:top_left_corner[1]+cell_size]
 
-    plt.imshow(cell)
+    plt.imshow(cell, vmin=-1, vmax=1)
     plt.show()
 
     return cell
@@ -118,12 +118,12 @@ def generate_interpolation(cell, b, c):
     print(potentials)
     f = sci_terp.LinearNDInterpolator(np.array(points), np.array(potentials), fill_value=-1)
 
-    table = np.full((19, 19), -1, dtype=float)
-    for i, y in enumerate(np.linspace(0, cell_size-1, num=19)):
-        for j, x in enumerate(np.linspace(0, cell_size-1, num=19)):
+    table = np.full((109, 109), -1, dtype=float)
+    for i, y in enumerate(np.linspace(0, cell_size-1, num=109)):
+        for j, x in enumerate(np.linspace(0, cell_size-1, num=109)):
             table[i, j] = f(y, x)
 
-    plt.imshow(table)
+    plt.imshow(table, vmin=-1, vmax=1)
     plt.show()
 
 
@@ -136,7 +136,7 @@ def main():
     level = 3
     grid_size = get_grid_size(b, level, crosswires)
 
-    coordinates, potentials = read_harmonic_function('../data/plus/3_1_1/plusdata_3_1_1_level3.dat')
+    coordinates, potentials = read_harmonic_function('../../data/plus/3_1_1/plusdata_3_1_1_level3.dat')
     indexed_layout = get_indexed_layout(coordinates, potentials, grid_size)
     adjacency_list = get_adjacency_list(indexed_layout, coordinates, crosswires)
     max, left, right = find_max(adjacency_list, potentials, coordinates, grid_size)

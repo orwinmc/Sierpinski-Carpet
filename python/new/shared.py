@@ -43,6 +43,7 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
     # Selection of display option
     if display_type == 'grid':
         plt.imshow(harmonic_function)
+        plt.colorbar()
         plt.show()
 
     elif display_type == 'contour':
@@ -54,6 +55,7 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
         ax.set_aspect('equal')
 
         plt.contour(ys, xs, harmonic_function, levels=np.linspace(0, 1, num=num_contours))
+        plt.colorbar()
         plt.show()
 
     return harmonic_function

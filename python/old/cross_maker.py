@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 def get_grid_layout(b, l, level):
     if (l!=0 and b%2 != l%2) or b==l:
         print("Invalid Input!")
-        return
+        sys.exit(1)
 
     num_vertices = 2 * b**level + 1
     sc = np.ones((num_vertices, num_vertices))

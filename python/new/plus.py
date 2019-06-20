@@ -121,6 +121,27 @@ def compute_harmonic_function(laplacian, b, crosswires, level):
 
     return potentials
 
+def get_max_subcell(harmonic_function, b, crosswires, level, subcoordinate, sublevel=1):
+    ''' Given a subcoordinate for a given sublevel, place the subcell into a
+    new np array and return the cell (e.g. if the sublevel is level-1 there is a
+    3x3 grid of subcells and example subcoordinates are (0,0), (2,1),
+    (1,0), etc) '''
+
+    if sublevel > level:
+        print('The sublevel chosen is too large for this carpet')
+        sys.exit(1)
+    else:
+        subcell_size = get_grid_size(b, crosswires, sublevel)
+        top_left_corner = ((subcell_size-1)*subcoordinate[0], (subcell_size-1)*subcoordinate[1])
+        subcell = harmonic_function[top_left_corner[0]:top_left_corner[0]+subcell_size, top_left_corner[1]:top_left_corner[1]+subcell_size]
+
+        # Display subcell
+        plt.imshow(subcell, vmin=0, vmax=1)
+        plt.colorbar()
+        plt.show()
+
+        return subcell
+
 def main():
     # Make printing a bit nicer for visualizing
     np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
@@ -147,9 +168,15 @@ def main():
     laplacian = shared.compute_laplacian(adjacency_list)
     potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
 
-    shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+    # Finding maximum edge
+    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
     max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    print(max_edges)
+
+    # Fetching max_cell
+    sublevel = 2
+    subcell_size = get_grid_size(args.b, args.crosswires, sublevel)
+    subcoordinate = (max_edges[0,0,0]//(subcell_size-1), max_edges[0,0,1]//(subcell_size-1))
+    get_max_subcell(harmonic_function, args.b, args.crosswires, args.level, subcoordinate, sublevel=sublevel)
 
 
 if __name__ == '__main__':
