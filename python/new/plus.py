@@ -1,5 +1,4 @@
 # General Imports
-from __future__ import print_function
 import sys
 import argparse
 
@@ -8,6 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 import scipy.sparse.linalg as la
+
+# Shared functions
+import shared
 
 def get_grid_size(b, crosswires, level):
     ''' Returns a integer, the number of vertices across for a given Sierpinski
@@ -48,56 +50,6 @@ def get_grid_layout(b, l, crosswires, level):
 
         return layout
 
-def index_layout(layout):
-    ''' Enumerates the layout of the given fractal.  At each location a -2 is
-    replaced by the index of the coordinate. Boundaries are indexed first in
-    counterclockwise order (but smallest to biggest) starting with the
-    left edge. '''
-
-    print('Indexing the given layout ...')
-
-    coordinates = []
-    grid_size = np.shape(layout)[0]
-    current_index = 0
-
-    # Enumerates Left Edge
-    for y in range(grid_size):
-        if layout[y, 0] == -2:
-            layout[y, 0] = current_index
-            coordinates.append((y, 0))
-            current_index += 1
-
-    # Enumerates Bottom Edge
-    for x in range(grid_size):
-        if layout[grid_size-1, x] == -2:
-            layout[grid_size-1, x] = current_index
-            coordinates.append((grid_size-1, x))
-            current_index += 1
-
-    # Enumerates Right Edge
-    for y in range(grid_size):
-        if layout[y, grid_size-1] == -2:
-            layout[y, grid_size-1] = current_index
-            coordinates.append((y, grid_size-1))
-            current_index += 1
-
-    # Enumerates Bottom Edge
-    for x in range(grid_size):
-        if layout[0, x] == -2:
-            layout[0, x] = current_index
-            coordinates.append((0, x))
-            current_index += 1
-
-    # Enumerates remaining vertices
-    for y,row in enumerate(layout):
-        for x,val in enumerate(row):
-            if val == -2:
-                layout[y, x] = current_index
-                coordinates.append((y, x))
-                current_index += 1
-
-    return np.array(coordinates)
-
 def get_adjacency_list(layout, coordinates, crosswires):
     ''' Constructs the adjacency list for a given SC.  All neighbors are marked
     as being "connected" except those which are on the tips of each + symbol
@@ -123,24 +75,6 @@ def get_adjacency_list(layout, coordinates, crosswires):
         adjacency_list.append(row)
 
     return adjacency_list
-
-def compute_laplacian(adjacency_list):
-    ''' Computes a sparse matrix laplacian from the given adjacency list.
-    Uses a lil_matrix currently'''
-
-    print('Computing Laplacian ...')
-    laplacian = sparse.lil_matrix((len(adjacency_list), len(adjacency_list)))
-
-    # Creates a sparse matrix of the laplacian from the adjacency_list
-    for i, row in enumerate(adjacency_list):
-        neighbors = 0
-        for index in row:
-            laplacian[i, index] = 1
-            neighbors+=1
-
-        laplacian[i, i] = -neighbors
-
-    return laplacian
 
 def compute_harmonic_function(laplacian, b, crosswires, level):
     ''' Computes the harmonic function for which the left edge of a given
@@ -187,48 +121,6 @@ def compute_harmonic_function(laplacian, b, crosswires, level):
 
     return potentials
 
-def display_harmonic_function(potentials, coordinates, grid_size, display_type='grid', num_contours=200):
-    ''' For viewing the harmonic functions computed. Two options are available
-    ("grid" and "contour") '''
-
-    harmonic_function = np.full((grid_size, grid_size), None, dtype=float)
-
-    # Generates table with harmonic function
-    for i,coordinate in enumerate(coordinates):
-        y, x = coordinate
-        harmonic_function[y, x] = potentials[i]
-
-    # Selection of display option
-    if display_type == 'grid':
-        plt.imshow(harmonic_function)
-        plt.show()
-    elif display_type == 'contour':
-        ys = range(grid_size)
-        xs = range(grid_size)
-
-        # Squares plot
-        ax = plt.gca()
-        ax.set_aspect('equal')
-
-        plt.contour(ys, xs, harmonic_function, levels=np.linspace(0, 1, num=num_contours))
-        plt.show()
-
-def display_grid_layout(layout, display_type='grid'):
-    ''' For viewing the fractal (SC) layout. Two options are available
-    ("terminal" and "matplotlib") '''
-
-    if display_type == 'matplotlib':
-        plt.imshow(layout.astype(int))
-        plt.show()
-    elif display_type == 'terminal':
-        for y, row in enumerate(layout):
-            for x, val in enumerate(row):
-                if val == -2:
-                    print(u"\u2588 ", end='')
-                else:
-                    print("  ", end='')
-            print()
-
 def main():
     # Make printing a bit nicer for visualizing
     np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
@@ -247,15 +139,15 @@ def main():
     layout = get_grid_layout(args.b, args.l, args.crosswires, args.level)
 
     # Visualization of Fractal
-    display_grid_layout(layout, display_type='matplotlib')
+    shared.display_grid_layout(layout, display_type='matplotlib')
 
     # Possibly need to clear some memory, insert `del layout` at some point
-    coordinates = index_layout(layout)
+    coordinates = shared.index_layout(layout)
     adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
-    laplacian = compute_laplacian(adjacency_list)
+    laplacian = shared.compute_laplacian(adjacency_list)
     potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
 
-    display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+    shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
 
 if __name__ == '__main__':

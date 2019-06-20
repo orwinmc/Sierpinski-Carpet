@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 import scipy.sparse.linalg as la
 
+# Shared functions
+import shared
+
 def get_grid_size(b, level):
     return 2 * b**level + 1
 
@@ -41,21 +44,73 @@ def get_grid_layout(b, l, level):
 
     return layout
 
-def display_grid_layout(layout, display_type='grid'):
-    ''' For viewing the fractal (SC) layout. Two options are available
-    ("terminal" and "matplotlib") '''
+def get_adjacency_list(layout, coordinates):
+    print('Computing Adjacency List ...')
 
-    if display_type == 'matplotlib':
-        plt.imshow(layout.astype(int))
-        plt.show()
-    elif display_type == 'terminal':
-        for y, row in enumerate(layout):
-            for x, val in enumerate(row):
-                if val == -2:
-                    print(u"\u2588 ", end='')
-                else:
-                    print("  ", end='')
-            print()
+    adjacency_list = []
+    grid_size = np.shape(layout)[0]
+
+    # Determines adjacency list based off neighbors (diagonals)
+    for coordinate in coordinates:
+        row = []
+        y, x = coordinate
+        if x > 0 and y > 0 and layout[y-1, x-1] != -1:
+            row.append(layout[y-1, x-1])
+        if x < grid_size-1 and y > 0 and layout[y-1, x+1] != -1:
+            row.append(layout[y-1, x+1])
+        if x > 0 and y < grid_size-1 and layout[y+1, x-1] != -1:
+            row.append(layout[y+1, x-1])
+        if x < grid_size-1 and y < grid_size-1 and layout[y+1, x+1] != -1:
+            row.append(layout[y+1, x+1])
+        adjacency_list.append(row)
+
+    return adjacency_list
+
+def compute_harmonic_function(laplacian, b, crosswires, level):
+    ''' Computes the harmonic function for which the left edge of a given
+    carpet has potential 0, and the right edge has potential 1'''
+
+    '''print('Computing Harmonic Function Potentials')
+
+    num_coordinates = np.shape(laplacian)[0]
+    num_boundary_points = crosswires*b**level
+
+    # Sections of A
+    topleft_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, num_boundary_points:2*num_boundary_points])
+    topright_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 3*num_boundary_points:])
+    bottomleft_a = sparse.csr_matrix(laplacian[3*num_boundary_points:, num_boundary_points:2*num_boundary_points])
+    bottomright_a = sparse.csr_matrix(laplacian[3*num_boundary_points:, 3*num_boundary_points:])
+
+    # Combine Sections with hstack / vstack (CSR cast is due to matrices being turned into COO)
+    top_a = sparse.hstack([topleft_a, topright_a])
+    bottom_a = sparse.hstack([bottomleft_a, bottomright_a])
+    a = sparse.csr_matrix(sparse.vstack([top_a, bottom_a]))
+
+    # Sections of R
+    topleft_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 0:num_boundary_points])
+    topright_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 2*num_boundary_points:3*num_boundary_points])
+    bottomleft_r = sparse.csr_matrix(laplacian[3*num_boundary_points:, 0:num_boundary_points])
+    bottomright_r = sparse.csr_matrix(laplacian[3*num_boundary_points:, 2*num_boundary_points:3*num_boundary_points])
+
+    # Combine Sections with hstack / vstack
+    top_r = sparse.hstack([topleft_r, topright_r])
+    bottom_r = sparse.hstack([bottomleft_r, bottomright_r])
+    r = sparse.vstack([top_r, bottom_r])
+
+    # Set Dirichlet Boundary Conditions (Left / Right Edge)
+    dirichlet = np.zeros((2*num_boundary_points))
+    dirichlet[num_boundary_points:] = 1
+    b = -r.dot(dirichlet)
+
+    # Uses a linear algebra solver to compute harmonic function potentials
+    potentials = la.spsolve(a, b)
+
+    # Add in boundary conditions for full harmonic function
+    potentials = np.insert(potentials, num_boundary_points, dirichlet[num_boundary_points:])
+    potentials = np.insert(potentials, 0, dirichlet[:num_boundary_points])
+
+    return potentials'''
+    pass
 
 def main():
     # Make printing a bit nicer for visualizing
@@ -72,7 +127,17 @@ def main():
     print('Generating x Graph Approximation for b=%d, l=%d, level=%d ...' % (args.b, args.l, args.level))
     grid_size = get_grid_size(args.b, args.level)
     layout = get_grid_layout(args.b, args.l, args.level)
-    display_grid_layout(layout, display_type='matplotlib')
+
+    # Visualization of Fractal
+    shared.display_grid_layout(layout, display_type='matplotlib')
+
+    # Possibly need to clear some memory, insert `del layout` at some point
+    coordinates = shared.index_layout(layout)
+    adjacency_list = get_adjacency_list(layout, coordinates)
+    laplacian = shared.compute_laplacian(adjacency_list)
+    #print(laplacian.todense())
+    #print(adjacency_list)
+
 
 if __name__ == '__main__':
     main()
