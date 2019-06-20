@@ -1,6 +1,7 @@
 # Sierpinski-Carpet
 UCONN Math REU - Sierpinski Carpet Project ([Project Link](https://mathreu.uconn.edu/projects/fractals/))
 ![Visual for Level 3 Plus Graph Approximation](imgs/plus31-level3-carpet.png)
+![Visual for Level 3 Cross Graph Approximation](imgs/cross31-level3-carpet.png)
 
 # Python Version
 
