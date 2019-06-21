@@ -141,6 +141,8 @@ def main():
     max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
     print(max_edges)
 
+    filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)
+    shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)
 
 if __name__ == '__main__':
     main()

@@ -2,7 +2,6 @@
 from __future__ import print_function
 import sys
 import argparse
-import datetime
 
 # Math Imports
 import numpy as np
@@ -162,13 +161,4 @@ def max_edges(adjacency_list, potentials, coordinates, grid_size):
 
     return np.array(max_edges)
 
-def save_harmonics(b, l, level, potentials, coordinates, filename):
-    with open(filename, 'w') as fout:
-        fout.write('Produced by "The Resistance",' + str(datetime.datetime.now()) + '\n')
-        fout.write('---------------------------------------------------------\n')
-        fout.write('Parameters: b = %d, l = %d, level = %d\n' % (b, l, level))
-        fout.write('---------------------------------------------------------\n')
-        fout.write('y\tx\tpotential\n')
-        for i, coordinate in enumerate(coordinates):
-            y, x = coordinate
-            fout.write('%d\t%d\t%f\n' % (y, x, potentials[i]))
+'''def save_harmonics(potentials, coordinates, )'''
