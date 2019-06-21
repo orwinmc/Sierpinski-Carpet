@@ -425,5 +425,10 @@ int main() {
     harmonic_function(b, l, level, crosswires, "asdf");
 
 }
+<<<<<<< HEAD
 // test
 // test2
+=======
+
+// Test
+>>>>>>> 58ae83980b7b34036742ae00f048c56bd46221c5
