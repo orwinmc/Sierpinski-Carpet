@@ -3,6 +3,7 @@ from __future__ import print_function
 import sys
 import argparse
 import datetime
+from tqdm import tqdm
 
 # Math Imports
 import numpy as np
@@ -102,7 +103,7 @@ def index_layout(layout):
             current_index += 1
 
     # Enumerates remaining vertices
-    for y,row in enumerate(layout):
+    for y,row in tqdm(enumerate(layout), total=np.shape(layout)[0]):
         for x,val in enumerate(row):
             if val == -2:
                 layout[y, x] = current_index

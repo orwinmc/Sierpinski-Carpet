@@ -284,6 +284,48 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
     //print_mtrx(x);
 }
 
+// TO BE CLEANED UP
+double max_difference(vector< vector<long>> & adjacency_list, Eigen::SparseMatrix<double> & potentials) {
+    long num_coordinates = adjacency_list.size();
+    int num_computed_points = potentials.rows();
+    int num_boundary_points = num_coordinates-num_computed_points;
+
+    double max_diff = 0;
+
+    for (int i = 0; i<adjacency_list.size(); i++) {
+        // figure out potential
+        double potential_a = 1;
+        if (i < num_boundary_points/2) {
+            potential_a = 0;
+        } else if (i >= num_boundary_points) {
+            potential_a = potentials.coeff(i-num_boundary_points, 0);
+        }
+
+        vector<long> row = adjacency_list[i];
+        for (int j = 0; j<row.size(); j++) {
+            long index = row[j];
+
+            // figure out potential
+            double potential_b = 1;
+            if (index < num_boundary_points/2) {
+                potential_b = 0;
+            } else if (index >= num_boundary_points) {
+                potential_b = potentials.coeff(index-num_boundary_points, 0);
+            }
+
+            double diff = abs(potential_a-potential_b);
+
+            if (diff-max_diff > 0.0000001) {
+                //cout << diff << endl;
+                max_diff = diff;
+            }
+        }
+    }
+
+    return max_diff;
+}
+// THIS SECTION ABOVE
+
 int harmonic_function(int b, int l, int level, int crosswires, string filename) {
     /*struct rlimit lim;
     getrlimit(RLIMIT_STACK, &lim);
@@ -336,6 +378,12 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
     int num_computed_points = num_coordinates-num_boundary_points;
     Eigen::SparseMatrix<double> potentials(num_computed_points, 1);
     find_potentials(potentials, adjacency_list);
+
+    // To be fixed up
+    double max_diff = max_difference(adjacency_list, potentials);
+    cout << max_diff << endl;
+
+
 
     // Output to file
     /*ofstream fout(filename);
