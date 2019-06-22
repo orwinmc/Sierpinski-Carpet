@@ -1,6 +1,7 @@
 # General Imports
 import sys
 import argparse
+from tqdm import tqdm
 
 # Math Imports
 import numpy as np
@@ -62,7 +63,7 @@ def get_adjacency_list(layout, coordinates, crosswires):
     grid_size = np.shape(layout)[0]
 
     # Determines adjacency list based off neighbors (and # crosswires)
-    for coordinate in coordinates:
+    for coordinate in tqdm(coordinates, total=len(coordinates)):
         row = []
         y, x = coordinate
         if x > 0 and y % (crosswires+1) != 0 and layout[y, x-1] != -1:
@@ -259,10 +260,30 @@ def main():
     potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
+    # Max Edge Portion
+    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #print(max_edges)
+    print('left edge', coordinates[max_edges[0,0], 0], coordinates[max_edges[0,0], 1])
+    print('right edge', coordinates[max_edges[0,1], 0], coordinates[max_edges[0,1], 1])
+    print('left potential', potentials[max_edges[0,0]])
+    print('right potential', potentials[max_edges[0,1]])
+
+    print()
+
+    # Energy Calculation
+    print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
+
+
+
+
+
+
+
+
     ## INTERPOLATION PORTION
-    print('------------------------------------------------')
+    '''print('------------------------------------------------')
     print('Beginning Interpolation of cell for ...')
-    interpolation_level = 1
+    interpolation_level = 4
     # Finding maximum edge
     max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
     #print(max_edges)
@@ -295,7 +316,7 @@ def main():
     dirichlet = generate_interpolation(cell, args.b, args.crosswires, interpolation_level, interpolation_layout)
     interpolation_potentials = compute_interpolation_harmonic_function(interpolation_laplacian, args.b, args.crosswires, interpolation_level, dirichlet)
     interpolation_harmonic_function = shared.display_harmonic_function(interpolation_potentials, interpolation_coordinates, interpolation_grid_size, display_type='grid')
-    '''potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)'''
+    ''''''potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)''''''
 
     ## COMPARE DIFFERENCES
     print(max_edges)
@@ -303,7 +324,7 @@ def main():
     print(interpolation_max_edges)
 
     print(abs(potentials[max_edges[0,0]]-potentials[max_edges[0,1]]))
-    print(abs(interpolation_potentials[interpolation_max_edges[0,0]]-interpolation_potentials[interpolation_max_edges[0,1]]))
+    print(abs(interpolation_potentials[interpolation_max_edges[0,0]]-interpolation_potentials[interpolation_max_edges[0,1]]))'''
 
 
 if __name__ == '__main__':

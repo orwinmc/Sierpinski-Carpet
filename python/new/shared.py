@@ -120,7 +120,7 @@ def compute_laplacian(adjacency_list):
     laplacian = sparse.lil_matrix((len(adjacency_list), len(adjacency_list)))
 
     # Creates a sparse matrix of the laplacian from the adjacency_list
-    for i, row in enumerate(adjacency_list):
+    for i, row in tqdm(enumerate(adjacency_list), total=len(adjacency_list)):
         neighbors = 0
         for index in row:
             laplacian[i, index] = 1
@@ -162,6 +162,16 @@ def max_edges(adjacency_list, potentials, coordinates, grid_size):
 
 
     return np.array(max_edges)
+
+
+def get_energy(adjacency_list, potentials, r=1):
+    energy = 0.0
+    for i, row in enumerate(adjacency_list):
+        for index in row:
+            energy += (1.0/r)*(potentials[i]-potentials[index])**2
+
+    return energy/2;
+
 
 def save_harmonics(b, l, level, potentials, coordinates, filename):
     with open(filename, 'w') as fout:
