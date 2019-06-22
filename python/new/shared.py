@@ -87,27 +87,50 @@ def index_layout(layout):
             current_index += 1
 
     # Enumerates Right Edge
-    for y in range(grid_size):
+    for y in range(grid_size-1, -1,-1):
         if layout[y, grid_size-1] == -2:
             layout[y, grid_size-1] = current_index
             coordinates.append((y, grid_size-1))
             current_index += 1
 
-    # Enumerates Bottom Edge
-    for x in range(grid_size):
+    # Enumerates Top Edge
+    for x in range(grid_size-1, -1, -1):
         if layout[0, x] == -2:
             layout[0, x] = current_index
             coordinates.append((0, x))
             current_index += 1
 
     # Enumerates remaining vertices
-    for y,row in enumerate(layout):
-        for x,val in enumerate(row):
-            if val == -2:
-                layout[y, x] = current_index
-                coordinates.append((y, x))
+    removed_layers = 1
+    while (grid_size - 2*removed_layers) > 0:
+        # Enumerates Left Edge
+        for y in range(removed_layers,grid_size-removed_layers):
+            if layout[y, removed_layers] == -2:
+                layout[y, removed_layers] = current_index
+                coordinates.append((y, 0))
                 current_index += 1
 
+        # Enumerates Bottom Edge
+        for x in range(removed_layers, grid_size - removed_layers):
+            if layout[grid_size-1-removed_layers, x] == -2:
+                layout[grid_size-1-removed_layers, x] = current_index
+                coordinates.append((grid_size-1, x))
+                current_index += 1
+
+        # Enumerates Right Edge
+        for y in range(grid_size-1 - removed_layers, removed_layers-1,-1):
+            if layout[y, grid_size-1-removed_layers] == -2:
+                layout[y, grid_size-1-removed_layers] = current_index
+                coordinates.append((y, grid_size-1))
+                current_index += 1
+
+        # Enumerates Top Edge
+        for x in range(grid_size-1 - removed_layers, removed_layers-1, -1):
+            if layout[removed_layers, x] == -2:
+                layout[removed_layers, x] = current_index
+                coordinates.append((0, x))
+                current_index += 1
+        removed_layers +=1
     return np.array(coordinates)
 
 def compute_laplacian(adjacency_list):

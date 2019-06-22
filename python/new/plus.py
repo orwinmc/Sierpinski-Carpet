@@ -158,25 +158,26 @@ def main():
     print('Generating + Graph Approximation for b=%d, l=%d, crosswires=%d, level=%d ...' % (args.b, args.l, args.crosswires, args.level))
     grid_size = get_grid_size(args.b, args.crosswires, args.level)
     layout = get_grid_layout(args.b, args.l, args.crosswires, args.level)
-
+    print(layout)
     # Visualization of Fractal
     shared.display_grid_layout(layout, display_type='matplotlib')
 
     # Possibly need to clear some memory, insert `del layout` at some point
     coordinates = shared.index_layout(layout)
-    adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
-    laplacian = shared.compute_laplacian(adjacency_list)
-    potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
+    print(layout)
+    #adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
+    #laplacian = shared.compute_laplacian(adjacency_list)
+    #potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
 
     # Finding maximum edge
-    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
 
     # Fetching max_cell
-    sublevel = 2
-    subcell_size = get_grid_size(args.b, args.crosswires, sublevel)
-    subcoordinate = (max_edges[0,0,0]//(subcell_size-1), max_edges[0,0,1]//(subcell_size-1))
-    get_max_subcell(harmonic_function, args.b, args.crosswires, args.level, subcoordinate, sublevel=sublevel)
+    #sublevel = 2
+    #subcell_size = get_grid_size(args.b, args.crosswires, sublevel)
+    #subcoordinate = (max_edges[0,0,0]//(subcell_size-1), max_edges[0,0,1]//(subcell_size-1))
+    #get_max_subcell(harmonic_function, args.b, args.crosswires, args.level, subcoordinate, sublevel=sublevel)
 
 
 if __name__ == '__main__':
