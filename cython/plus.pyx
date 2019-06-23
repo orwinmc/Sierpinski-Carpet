@@ -243,6 +243,8 @@ def main():
     parser.add_argument('-a', '--level', type=int, default=3, help='Number of pre-carpet contraction iterations')
     args = parser.parse_args()
 
+    args.level=7
+
     # Begin Computation of Harmonic Function
     print('Generating + Graph Approximation for b=%d, l=%d, crosswires=%d, level=%d ...' % (args.b, args.l, args.crosswires, args.level))
     grid_size = get_grid_size(args.b, args.crosswires, args.level)

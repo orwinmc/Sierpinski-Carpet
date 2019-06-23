@@ -62,8 +62,12 @@ def get_adjacency_list(layout, coordinates, crosswires):
     adjacency_list = []
     grid_size = np.shape(layout)[0]
 
+    #counter = 0
+
     # Determines adjacency list based off neighbors (and # crosswires)
     for coordinate in tqdm(coordinates, total=len(coordinates)):
+        #print(counter)
+        #counter+=1
         row = []
         y, x = coordinate
         if x > 0 and y % (crosswires+1) != 0 and layout[y, x-1] != -1:
@@ -255,23 +259,44 @@ def main():
     # Possibly need to clear some memory, insert `del layout` at some point
     coordinates = shared.index_layout(layout)
     adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
-    del layout
     laplacian = shared.compute_laplacian(adjacency_list)
-    potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
-    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+
+    edge_length = args.crosswires*args.b**args.level
+    boundary_indices = []
+    boundary_indices.extend(range(edge_length))
+    boundary_indices.extend(range(2*edge_length, 3*edge_length))
+    print(boundary_indices)
+
+    boundary = np.zeros((2*edge_length))
+    boundary[edge_length:] = 1
+    print(boundary)
+
+    potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
+    print(potentials)
+    #harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+
+
+
+
+
+
+
+
+
+
 
     # Max Edge Portion
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
     #print(max_edges)
-    print('left edge', coordinates[max_edges[0,0], 0], coordinates[max_edges[0,0], 1])
-    print('right edge', coordinates[max_edges[0,1], 0], coordinates[max_edges[0,1], 1])
-    print('left potential', potentials[max_edges[0,0]])
-    print('right potential', potentials[max_edges[0,1]])
+    #print('left edge', coordinates[max_edges[0,0], 0], coordinates[max_edges[0,0], 1])
+    #print('right edge', coordinates[max_edges[0,1], 0], coordinates[max_edges[0,1], 1])
+    #print('left potential', potentials[max_edges[0,0]])
+    #print('right potential', potentials[max_edges[0,1]])
 
-    print()
+    #print()
 
     # Energy Calculation
-    print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
+    #print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
 
 
 

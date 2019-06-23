@@ -2,6 +2,7 @@
 from __future__ import print_function
 import sys
 import argparse
+from tqdm import tqdm
 
 # Math Imports
 import numpy as np
@@ -51,7 +52,7 @@ def get_adjacency_list(layout, coordinates):
     grid_size = np.shape(layout)[0]
 
     # Determines adjacency list based off neighbors (diagonals)
-    for coordinate in coordinates:
+    for coordinate in tqdm(coordinates, total=len(coordinates)):
         row = []
         y, x = coordinate
         if x > 0 and y > 0 and layout[y-1, x-1] != -1:
@@ -70,7 +71,7 @@ def compute_harmonic_function(laplacian, b, level):
     ''' Computes the harmonic function for which the left edge of a given
     carpet has potential 0, and the right edge has potential 1'''
 
-    print('Computing Harmonic Function Potentials')
+    print('Computing Harmonic Function Potentials ...')
 
     num_coordinates = np.shape(laplacian)[0]
     num_boundary_points = b**level+1
@@ -138,11 +139,11 @@ def main():
     potentials = compute_harmonic_function(laplacian, args.b, args.level)
 
     shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    print(max_edges)
+    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #print(max_edges)
 
-    filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)
-    shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)
+    '''filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)+'.dat'
+    shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)'''
 
 if __name__ == '__main__':
     main()

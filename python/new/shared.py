@@ -117,18 +117,49 @@ def compute_laplacian(adjacency_list):
     Uses a lil_matrix currently'''
 
     print('Computing Laplacian ...')
-    laplacian = sparse.lil_matrix((len(adjacency_list), len(adjacency_list)))
+    laplacian = sparse.lil_matrix((len(adjacency_list), len(adjacency_list)), dtype=np.short)
 
     # Creates a sparse matrix of the laplacian from the adjacency_list
     for i, row in tqdm(enumerate(adjacency_list), total=len(adjacency_list)):
-        neighbors = 0
         for index in row:
             laplacian[i, index] = 1
-            neighbors+=1
 
-        laplacian[i, i] = -neighbors
+        laplacian[i, i] = -len(row)
 
-    return laplacian
+    return sparse.csr_matrix(laplacian)
+
+def compute_harmonic_function(laplacian, boundary_indices, boundary):
+    print('Computing Harmonic Function Potentials ...')
+    num_boundary_points = len(boundary_indices)
+    num_computed_points = laplacian.get_shape()[0]-num_boundary_points
+    total_points = num_boundary_points + num_computed_points
+
+    perm = sparse.lil_matrix((total_points, total_points), dtype=np.short)
+
+    boundary_pos = 0
+    computed_pos = 0
+
+    for i in tqdm(range(total_points), total=total_points):
+        if boundary_pos < num_boundary_points and i == boundary_indices[boundary_pos]:
+            perm[boundary_pos, i] = 1
+            boundary_pos+=1
+        else:
+            perm[num_boundary_points+computed_pos, i] = 1
+            computed_pos+=1
+
+    perm = sparse.csr_matrix(perm)
+
+    reordered_laplacian = perm.dot(laplacian.dot(perm))
+
+    a = reordered_laplacian[num_boundary_points:, num_boundary_points:]
+    r = reordered_laplacian[num_boundary_points:, :num_boundary_points]
+    b = -r.dot(boundary)
+
+    # Uses a linear algebra solver to compute harmonic function potentials
+    potentials = la.spsolve(a, b)
+
+    return potentials
+
 
 def max_edges(adjacency_list, potentials, coordinates, grid_size):
     ''' Finds the maximum edges in a given fractal (based on the associated
