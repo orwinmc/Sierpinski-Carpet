@@ -148,6 +148,7 @@ def compute_laplacian(adjacency_list):
             laplacian[i, index] = 1
 
         laplacian[i, i] = -len(row)
+        print(-len(row))
 
     return sparse.csr_matrix(laplacian)
 
@@ -172,10 +173,15 @@ def compute_harmonic_function(laplacian, boundary_indices, boundary):
 
     perm = sparse.csr_matrix(perm)
 
+    print('laplacian')
+    print(laplacian.todense())
     reordered_laplacian = perm.dot(laplacian.dot(perm))
+    print('reordered')
+    print(reordered_laplacian.todense())
 
     a = reordered_laplacian[num_boundary_points:, num_boundary_points:]
     r = reordered_laplacian[num_boundary_points:, :num_boundary_points]
+    print(r.todense())
     b = -r.dot(boundary)
 
     # Uses a linear algebra solver to compute harmonic function potentials

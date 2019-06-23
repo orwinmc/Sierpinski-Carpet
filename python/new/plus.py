@@ -252,14 +252,21 @@ def main():
     print('Generating + Graph Approximation for b=%d, l=%d, crosswires=%d, level=%d ...' % (args.b, args.l, args.crosswires, args.level))
     grid_size = get_grid_size(args.b, args.crosswires, args.level)
     layout = get_grid_layout(args.b, args.l, args.crosswires, args.level)
-    print(layout)
+
+
     # Visualization of Fractal
-    #shared.display_grid_layout(layout, display_type='matplotlib')
+    shared.display_grid_layout(layout, display_type='matplotlib')
 
     # Possibly need to clear some memory, insert `del layout` at some point
     coordinates = shared.index_layout(layout)
+    print('coordinates')
+    print(coordinates)
+    print(layout)
     adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
+    print('adjacency_list')
+    print(adjacency_list)
     laplacian = shared.compute_laplacian(adjacency_list)
+    print(laplacian.todense())
 
     edge_length = args.crosswires*args.b**args.level
     boundary_indices = []
@@ -273,10 +280,8 @@ def main():
 
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     print(potentials)
+
     #harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-
-
-
 
 
 
@@ -297,7 +302,6 @@ def main():
 
     # Energy Calculation
     #print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
-
 
 
 
