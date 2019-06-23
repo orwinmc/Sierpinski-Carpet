@@ -272,15 +272,11 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
     Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
     solver.analyzePattern(a);
     solver.factorize(a);
-    //solver.setMaxIterations(1000);
-    //solver.setTolerance(0.001);
-    /*Eigen::Matrix<double, -1, 1> guess(num_computed_points);
-    for (int i = 0; i<num_computed_points; i++) {
-        guess[i] = 0.5;
-    }*/
-    //Eigen::SparseMatrix<double> x = lscg.solveWithGuess(b, guess);
-    //Eigen::VectorXd x(num_computed_points);
     potentials = solver.solve(b);
+
+    //Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> cg;
+    //cg.compute(a);
+    //potentials = cg.solve(b);
     //print_mtrx(x);
 }
 
@@ -327,14 +323,14 @@ double max_difference(vector< vector<long>> & adjacency_list, Eigen::SparseMatri
 // THIS SECTION ABOVE
 
 int harmonic_function(int b, int l, int level, int crosswires, string filename) {
-    /*struct rlimit lim;
+    struct rlimit lim;
     getrlimit(RLIMIT_STACK, &lim);
     cout << lim.rlim_cur << endl;
 
-    const rlimit stack_size = {16*1024*1024, 16*1024*1024};
+    const rlimit stack_size = {10*1024*1024, 10*1024*1024};
     if (setrlimit(RLIMIT_STACK, &stack_size) == -1) {
         return 1;
-    }*/
+    }
     // Parameters
     /*const int b = 3;
     const int l = 1;
@@ -385,6 +381,7 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
 
 
 
+    // Below is the Printing code (needs to)
     // Output to file
     /*ofstream fout(filename);
 
@@ -411,9 +408,9 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
 }
 
 int main() {
-    int b = 3;
+    int b = 7;
     int l = 1;
-    int level = 8;
+    int level = 2;
     int crosswires = 1;
     /*for (int level = 0; level<8; level++) {
         cout << "----------------------\n";
@@ -425,6 +422,3 @@ int main() {
     harmonic_function(b, l, level, crosswires, "asdf");
 
 }
-
-// Test
-// test again

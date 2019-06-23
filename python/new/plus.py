@@ -1,6 +1,7 @@
 # General Imports
 import sys
 import argparse
+from tqdm import tqdm
 
 # Math Imports
 import numpy as np
@@ -62,7 +63,7 @@ def get_adjacency_list(layout, coordinates, crosswires):
     grid_size = np.shape(layout)[0]
 
     # Determines adjacency list based off neighbors (and # crosswires)
-    for coordinate in coordinates:
+    for coordinate in tqdm(coordinates, total=len(coordinates)):
         row = []
         y, x = coordinate
         if x > 0 and y % (crosswires+1) != 0 and layout[y, x-1] != -1:
@@ -76,51 +77,6 @@ def get_adjacency_list(layout, coordinates, crosswires):
         adjacency_list.append(row)
 
     return adjacency_list
-
-def compute_harmonic_function(laplacian, b, crosswires, level):
-    ''' Computes the harmonic function for which the left edge of a given
-    carpet has potential 0, and the right edge has potential 1'''
-
-    print('Computing Harmonic Function Potentials')
-
-    num_coordinates = np.shape(laplacian)[0]
-    num_boundary_points = crosswires*b**level
-
-    # Sections of A
-    topleft_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, num_boundary_points:2*num_boundary_points])
-    topright_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 3*num_boundary_points:])
-    bottomleft_a = sparse.csr_matrix(laplacian[3*num_boundary_points:, num_boundary_points:2*num_boundary_points])
-    bottomright_a = sparse.csr_matrix(laplacian[3*num_boundary_points:, 3*num_boundary_points:])
-
-    # Combine Sections with hstack / vstack (CSR cast is due to matrices being turned into COO)
-    top_a = sparse.hstack([topleft_a, topright_a])
-    bottom_a = sparse.hstack([bottomleft_a, bottomright_a])
-    a = sparse.csr_matrix(sparse.vstack([top_a, bottom_a]))
-
-    # Sections of R
-    topleft_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 0:num_boundary_points])
-    topright_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 2*num_boundary_points:3*num_boundary_points])
-    bottomleft_r = sparse.csr_matrix(laplacian[3*num_boundary_points:, 0:num_boundary_points])
-    bottomright_r = sparse.csr_matrix(laplacian[3*num_boundary_points:, 2*num_boundary_points:3*num_boundary_points])
-
-    # Combine Sections with hstack / vstack
-    top_r = sparse.hstack([topleft_r, topright_r])
-    bottom_r = sparse.hstack([bottomleft_r, bottomright_r])
-    r = sparse.vstack([top_r, bottom_r])
-
-    # Set Dirichlet Boundary Conditions (Left / Right Edge)
-    dirichlet = np.zeros((2*num_boundary_points))
-    dirichlet[num_boundary_points:] = 1
-    b = -r.dot(dirichlet)
-
-    # Uses a linear algebra solver to compute harmonic function potentials
-    potentials = la.spsolve(a, b)
-
-    # Add in boundary conditions for full harmonic function
-    potentials = np.insert(potentials, num_boundary_points, dirichlet[num_boundary_points:])
-    potentials = np.insert(potentials, 0, dirichlet[:num_boundary_points])
-
-    return potentials
 
 ## HERE IS WHERE INTERPOLATION BEGINS (NEEDS TO BE CONFIRMED AND CLEANED UP)
 
@@ -249,20 +205,53 @@ def main():
     layout = get_grid_layout(args.b, args.l, args.crosswires, args.level)
 
     # Visualization of Fractal
-    #shared.display_grid_layout(layout, display_type='matplotlib')
+    shared.display_grid_layout(layout, display_type='matplotlib')
 
     # Possibly need to clear some memory, insert `del layout` at some point
     coordinates = shared.index_layout(layout)
     adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
-    del layout
     laplacian = shared.compute_laplacian(adjacency_list)
-    potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)
+
+    # Harmonic Function
+    # Set Dirichlet Boundary Indices
+    edge_length = args.crosswires*args.b**args.level
+    boundary_indices = []
+    boundary_indices.extend(range(edge_length))
+    boundary_indices.extend(range(2*edge_length, 3*edge_length))
+
+    # Set Dirichlet Boundary
+    boundary = np.zeros((2*edge_length))
+    boundary[edge_length:] = 1
+
+    # Compute Harmonic Function
+    potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
+
+
+    # Max Edge Portion
+    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #print(max_edges)
+    #print('left edge', coordinates[max_edges[0,0], 0], coordinates[max_edges[0,0], 1])
+    #print('right edge', coordinates[max_edges[0,1], 0], coordinates[max_edges[0,1], 1])
+    #print('left potential', potentials[max_edges[0,0]])
+    #print('right potential', potentials[max_edges[0,1]])
+
+    #print()
+
+    # Energy Calculation
+    #print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
+
+
+
+
+
+
+
     ## INTERPOLATION PORTION
-    print('------------------------------------------------')
+    '''print('------------------------------------------------')
     print('Beginning Interpolation of cell for ...')
-    interpolation_level = 1
+    interpolation_level = 4
     # Finding maximum edge
     max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
     #print(max_edges)
@@ -295,7 +284,7 @@ def main():
     dirichlet = generate_interpolation(cell, args.b, args.crosswires, interpolation_level, interpolation_layout)
     interpolation_potentials = compute_interpolation_harmonic_function(interpolation_laplacian, args.b, args.crosswires, interpolation_level, dirichlet)
     interpolation_harmonic_function = shared.display_harmonic_function(interpolation_potentials, interpolation_coordinates, interpolation_grid_size, display_type='grid')
-    '''potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)'''
+    ''''''potentials = compute_harmonic_function(laplacian, args.b, args.crosswires, args.level)''''''
 
     ## COMPARE DIFFERENCES
     print(max_edges)
@@ -303,7 +292,7 @@ def main():
     print(interpolation_max_edges)
 
     print(abs(potentials[max_edges[0,0]]-potentials[max_edges[0,1]]))
-    print(abs(interpolation_potentials[interpolation_max_edges[0,0]]-interpolation_potentials[interpolation_max_edges[0,1]]))
+    print(abs(interpolation_potentials[interpolation_max_edges[0,0]]-interpolation_potentials[interpolation_max_edges[0,1]]))'''
 
 
 if __name__ == '__main__':

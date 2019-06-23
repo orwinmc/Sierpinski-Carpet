@@ -2,6 +2,7 @@
 from __future__ import print_function
 import sys
 import argparse
+from tqdm import tqdm
 
 # Math Imports
 import numpy as np
@@ -51,7 +52,7 @@ def get_adjacency_list(layout, coordinates):
     grid_size = np.shape(layout)[0]
 
     # Determines adjacency list based off neighbors (diagonals)
-    for coordinate in coordinates:
+    for coordinate in tqdm(coordinates, total=len(coordinates)):
         row = []
         y, x = coordinate
         if x > 0 and y > 0 and layout[y-1, x-1] != -1:
@@ -65,52 +66,6 @@ def get_adjacency_list(layout, coordinates):
         adjacency_list.append(row)
 
     return adjacency_list
-
-def compute_harmonic_function(laplacian, b, level):
-    ''' Computes the harmonic function for which the left edge of a given
-    carpet has potential 0, and the right edge has potential 1'''
-
-    print('Computing Harmonic Function Potentials')
-
-    num_coordinates = np.shape(laplacian)[0]
-    num_boundary_points = b**level+1
-    #print(num_boundary_points)
-
-    # Sections of A
-    topleft_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, num_boundary_points:2*num_boundary_points-2])
-    topright_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, 3*num_boundary_points-2:])
-    bottomleft_a = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, num_boundary_points:2*num_boundary_points-2])
-    bottomright_a = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, 3*num_boundary_points-2:])
-
-    # Combine Sections with hstack / vstack (CSR cast is due to matrices being turned into COO)
-    top_a = sparse.hstack([topleft_a, topright_a])
-    bottom_a = sparse.hstack([bottomleft_a, bottomright_a])
-    a = sparse.csr_matrix(sparse.vstack([top_a, bottom_a]))
-
-    # Sections of R
-    topleft_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, 0:num_boundary_points])
-    topright_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, 2*num_boundary_points-2:3*num_boundary_points-2])
-    bottomleft_r = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, 0:num_boundary_points])
-    bottomright_r = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, 2*num_boundary_points-2:3*num_boundary_points-2])
-
-    # Combine Sections with hstack / vstack
-    top_r = sparse.hstack([topleft_r, topright_r])
-    bottom_r = sparse.hstack([bottomleft_r, bottomright_r])
-    r = sparse.vstack([top_r, bottom_r])
-
-    # Set Dirichlet Boundary Conditions (Left / Right Edge)
-    dirichlet = np.zeros((2*num_boundary_points))
-    dirichlet[num_boundary_points:] = 1
-    b = -r.dot(dirichlet)
-
-    # Uses a linear algebra solver to compute harmonic function potentials
-    potentials = la.spsolve(a, b)
-
-    # Add in boundary conditions for full harmonic function
-    potentials = np.insert(potentials, num_boundary_points-2, dirichlet[num_boundary_points:])
-    potentials = np.insert(potentials, 0, dirichlet[:num_boundary_points])
-
-    return potentials
 
 def main():
     # Make printing a bit nicer for visualizing
@@ -138,11 +93,11 @@ def main():
     potentials = compute_harmonic_function(laplacian, args.b, args.level)
 
     shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    print(max_edges)
+    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #print(max_edges)
 
-    filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)
-    shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)
+    '''filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)+'.dat'
+    shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)'''
 
 if __name__ == '__main__':
     main()

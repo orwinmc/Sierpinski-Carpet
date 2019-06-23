@@ -1,5 +1,15 @@
+# several files with ext .pyx, that i will call by their name
 from distutils.core import setup
-from Cython.Build import cythonize
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
 
-setup(name='Sierpinski Carpet + Graph Approximation',
-      ext_modules=cythonize("plus.pyx"))
+ext_modules=[
+    Extension("plus",       ["plus.pyx"]),
+    Extension("shared",         ["shared.pyx"])
+]
+
+setup(
+  name = 'Sierpinski Carpet + Graph Approximations',
+  cmdclass = {'build_ext': build_ext},
+  ext_modules = ext_modules,
+)
