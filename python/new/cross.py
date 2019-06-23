@@ -67,52 +67,6 @@ def get_adjacency_list(layout, coordinates):
 
     return adjacency_list
 
-def compute_harmonic_function(laplacian, b, level):
-    ''' Computes the harmonic function for which the left edge of a given
-    carpet has potential 0, and the right edge has potential 1'''
-
-    print('Computing Harmonic Function Potentials ...')
-
-    num_coordinates = np.shape(laplacian)[0]
-    num_boundary_points = b**level+1
-    #print(num_boundary_points)
-
-    # Sections of A
-    topleft_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, num_boundary_points:2*num_boundary_points-2])
-    topright_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, 3*num_boundary_points-2:])
-    bottomleft_a = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, num_boundary_points:2*num_boundary_points-2])
-    bottomright_a = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, 3*num_boundary_points-2:])
-
-    # Combine Sections with hstack / vstack (CSR cast is due to matrices being turned into COO)
-    top_a = sparse.hstack([topleft_a, topright_a])
-    bottom_a = sparse.hstack([bottomleft_a, bottomright_a])
-    a = sparse.csr_matrix(sparse.vstack([top_a, bottom_a]))
-
-    # Sections of R
-    topleft_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, 0:num_boundary_points])
-    topright_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points-2, 2*num_boundary_points-2:3*num_boundary_points-2])
-    bottomleft_r = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, 0:num_boundary_points])
-    bottomright_r = sparse.csr_matrix(laplacian[3*num_boundary_points-2:, 2*num_boundary_points-2:3*num_boundary_points-2])
-
-    # Combine Sections with hstack / vstack
-    top_r = sparse.hstack([topleft_r, topright_r])
-    bottom_r = sparse.hstack([bottomleft_r, bottomright_r])
-    r = sparse.vstack([top_r, bottom_r])
-
-    # Set Dirichlet Boundary Conditions (Left / Right Edge)
-    dirichlet = np.zeros((2*num_boundary_points))
-    dirichlet[num_boundary_points:] = 1
-    b = -r.dot(dirichlet)
-
-    # Uses a linear algebra solver to compute harmonic function potentials
-    potentials = la.spsolve(a, b)
-
-    # Add in boundary conditions for full harmonic function
-    potentials = np.insert(potentials, num_boundary_points-2, dirichlet[num_boundary_points:])
-    potentials = np.insert(potentials, 0, dirichlet[:num_boundary_points])
-
-    return potentials
-
 def main():
     # Make printing a bit nicer for visualizing
     np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)

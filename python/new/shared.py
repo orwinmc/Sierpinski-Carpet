@@ -30,6 +30,7 @@ def display_grid_layout(layout, display_type='grid'):
                     print("  ", end='')
             print()
 
+
 def display_harmonic_function(potentials, coordinates, grid_size, display_type='grid', num_contours=200):
     ''' For viewing the harmonic functions computed. Two options are available
     ("grid" and "contour").  The harmonic function np array is returned (for
@@ -61,6 +62,7 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
         plt.show()
 
     return harmonic_function
+
 
 def index_layout(layout):
     ''' Enumerates the layout of the given fractal.  At each location a -2 is
@@ -135,6 +137,7 @@ def index_layout(layout):
         removed_layers +=1
     return np.array(coordinates)
 
+
 def compute_laplacian(adjacency_list):
     ''' Computes a sparse matrix laplacian from the given adjacency list.
     Uses a lil_matrix currently'''
@@ -148,9 +151,10 @@ def compute_laplacian(adjacency_list):
             laplacian[i, index] = 1
 
         laplacian[i, i] = -len(row)
-        print(-len(row))
+        #print(-len(row))
 
     return sparse.csr_matrix(laplacian)
+
 
 def compute_harmonic_function(laplacian, boundary_indices, boundary):
     print('Computing Harmonic Function Potentials ...')
@@ -158,6 +162,7 @@ def compute_harmonic_function(laplacian, boundary_indices, boundary):
     num_computed_points = laplacian.get_shape()[0]-num_boundary_points
     total_points = num_boundary_points + num_computed_points
 
+    # Calculating Permutation Matrix
     perm = sparse.lil_matrix((total_points, total_points), dtype=np.short)
 
     boundary_pos = 0
@@ -171,21 +176,21 @@ def compute_harmonic_function(laplacian, boundary_indices, boundary):
             perm[num_boundary_points+computed_pos, i] = 1
             computed_pos+=1
 
+    # Applying Permutation Matrix to put Boundary points first
     perm = sparse.csr_matrix(perm)
-
-    print('laplacian')
-    print(laplacian.todense())
     reordered_laplacian = perm.dot(laplacian.dot(perm))
-    print('reordered')
-    print(reordered_laplacian.todense())
 
+    # Reorganize Matrices for Solver
     a = reordered_laplacian[num_boundary_points:, num_boundary_points:]
     r = reordered_laplacian[num_boundary_points:, :num_boundary_points]
-    print(r.todense())
     b = -r.dot(boundary)
 
     # Uses a linear algebra solver to compute harmonic function potentials
     potentials = la.spsolve(a, b)
+
+    # Reinsert Boundary Potentials into solved potentials
+    for i, boundary_index in enumerate(boundary_indices):
+        potentials = np.insert(potentials, boundary_index, boundary[i])
 
     return potentials
 

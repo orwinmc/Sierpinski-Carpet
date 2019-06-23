@@ -62,12 +62,8 @@ def get_adjacency_list(layout, coordinates, crosswires):
     adjacency_list = []
     grid_size = np.shape(layout)[0]
 
-    #counter = 0
-
     # Determines adjacency list based off neighbors (and # crosswires)
     for coordinate in tqdm(coordinates, total=len(coordinates)):
-        #print(counter)
-        #counter+=1
         row = []
         y, x = coordinate
         if x > 0 and y % (crosswires+1) != 0 and layout[y, x-1] != -1:
@@ -81,51 +77,6 @@ def get_adjacency_list(layout, coordinates, crosswires):
         adjacency_list.append(row)
 
     return adjacency_list
-
-def compute_harmonic_function(laplacian, b, crosswires, level):
-    ''' Computes the harmonic function for which the left edge of a given
-    carpet has potential 0, and the right edge has potential 1'''
-
-    print('Computing Harmonic Function Potentials')
-
-    num_coordinates = np.shape(laplacian)[0]
-    num_boundary_points = crosswires*b**level
-
-    # Sections of A
-    topleft_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, num_boundary_points:2*num_boundary_points])
-    topright_a = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 3*num_boundary_points:])
-    bottomleft_a = sparse.csr_matrix(laplacian[3*num_boundary_points:, num_boundary_points:2*num_boundary_points])
-    bottomright_a = sparse.csr_matrix(laplacian[3*num_boundary_points:, 3*num_boundary_points:])
-
-    # Combine Sections with hstack / vstack (CSR cast is due to matrices being turned into COO)
-    top_a = sparse.hstack([topleft_a, topright_a])
-    bottom_a = sparse.hstack([bottomleft_a, bottomright_a])
-    a = sparse.csr_matrix(sparse.vstack([top_a, bottom_a]))
-
-    # Sections of R
-    topleft_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 0:num_boundary_points])
-    topright_r = sparse.csr_matrix(laplacian[num_boundary_points:2*num_boundary_points, 2*num_boundary_points:3*num_boundary_points])
-    bottomleft_r = sparse.csr_matrix(laplacian[3*num_boundary_points:, 0:num_boundary_points])
-    bottomright_r = sparse.csr_matrix(laplacian[3*num_boundary_points:, 2*num_boundary_points:3*num_boundary_points])
-
-    # Combine Sections with hstack / vstack
-    top_r = sparse.hstack([topleft_r, topright_r])
-    bottom_r = sparse.hstack([bottomleft_r, bottomright_r])
-    r = sparse.vstack([top_r, bottom_r])
-
-    # Set Dirichlet Boundary Conditions (Left / Right Edge)
-    dirichlet = np.zeros((2*num_boundary_points))
-    dirichlet[num_boundary_points:] = 1
-    b = -r.dot(dirichlet)
-
-    # Uses a linear algebra solver to compute harmonic function potentials
-    potentials = la.spsolve(a, b)
-
-    # Add in boundary conditions for full harmonic function
-    potentials = np.insert(potentials, num_boundary_points, dirichlet[num_boundary_points:])
-    potentials = np.insert(potentials, 0, dirichlet[:num_boundary_points])
-
-    return potentials
 
 ## HERE IS WHERE INTERPOLATION BEGINS (NEEDS TO BE CONFIRMED AND CLEANED UP)
 
@@ -253,40 +204,28 @@ def main():
     grid_size = get_grid_size(args.b, args.crosswires, args.level)
     layout = get_grid_layout(args.b, args.l, args.crosswires, args.level)
 
-
     # Visualization of Fractal
     shared.display_grid_layout(layout, display_type='matplotlib')
 
     # Possibly need to clear some memory, insert `del layout` at some point
     coordinates = shared.index_layout(layout)
-    print('coordinates')
-    print(coordinates)
-    print(layout)
     adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
-    print('adjacency_list')
-    print(adjacency_list)
     laplacian = shared.compute_laplacian(adjacency_list)
-    print(laplacian.todense())
 
+    # Harmonic Function
+    # Set Dirichlet Boundary Indices
     edge_length = args.crosswires*args.b**args.level
     boundary_indices = []
     boundary_indices.extend(range(edge_length))
     boundary_indices.extend(range(2*edge_length, 3*edge_length))
-    print(boundary_indices)
 
+    # Set Dirichlet Boundary
     boundary = np.zeros((2*edge_length))
     boundary[edge_length:] = 1
-    print(boundary)
 
+    # Compute Harmonic Function
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
-    print(potentials)
-
-    #harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-
-
-
-
-
+    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
 
 
