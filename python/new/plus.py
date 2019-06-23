@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 import scipy.sparse.linalg as la
 import scipy.interpolate as interpolate
+import random
 
 # Shared functions
 import shared
@@ -172,7 +173,7 @@ def compute_interpolation_harmonic_function(interpolation_laplacian, b, crosswir
 
     num_coordinates = np.shape(interpolation_laplacian)[0]
     num_boundary_points = crosswires*b**interpolation_level
-    print(num_boundary_points)
+    #print(num_boundary_points)
 
     a = sparse.csr_matrix(interpolation_laplacian[4*num_boundary_points:, 4*num_boundary_points:])
     r = sparse.csr_matrix(interpolation_laplacian[4*num_boundary_points:, :4*num_boundary_points])
@@ -212,7 +213,7 @@ def main():
     adjacency_list = get_adjacency_list(layout, coordinates, args.crosswires)
     laplacian = shared.compute_laplacian(adjacency_list)
 
-    # Harmonic Function
+    # 0 -> 1 Harmonic Function
     # Set Dirichlet Boundary Indices
     edge_length = args.crosswires*args.b**args.level
     boundary_indices = []
@@ -223,11 +224,24 @@ def main():
     boundary = np.zeros((2*edge_length))
     boundary[edge_length:] = 1
 
-    # Compute Harmonic Function
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
+    # Exit Distribution
+    # Set Dirichlet Boundary Indices
+    boundary_indices = []
+    boundary_indices.extend(range(4*edge_length))
+    boundary_indices.append(random.randint(4*edge_length, len(coordinates)-1))
+    #print(boundary_indices)
 
+    # Set Dirichlet Boundary
+    boundary = np.full((4*edge_length+1), 0)
+    boundary[-1] = 1
+
+    potentials2 = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
+    harmonic_function2 = shared.display_harmonic_function(potentials2, coordinates, grid_size, display_type='grid')
+    #print(coordinates)
+    #print(potentials2)
 
     # Max Edge Portion
     #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)

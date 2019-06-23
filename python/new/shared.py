@@ -178,7 +178,7 @@ def compute_harmonic_function(laplacian, boundary_indices, boundary):
 
     # Applying Permutation Matrix to put Boundary points first
     perm = sparse.csr_matrix(perm)
-    reordered_laplacian = perm.dot(laplacian.dot(perm))
+    reordered_laplacian = perm.dot(laplacian.dot(perm.transpose()))
 
     # Reorganize Matrices for Solver
     a = reordered_laplacian[num_boundary_points:, num_boundary_points:]
