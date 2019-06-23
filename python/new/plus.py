@@ -252,7 +252,7 @@ def main():
     print('Generating + Graph Approximation for b=%d, l=%d, crosswires=%d, level=%d ...' % (args.b, args.l, args.crosswires, args.level))
     grid_size = get_grid_size(args.b, args.crosswires, args.level)
     layout = get_grid_layout(args.b, args.l, args.crosswires, args.level)
-
+    print(layout)
     # Visualization of Fractal
     #shared.display_grid_layout(layout, display_type='matplotlib')
 
