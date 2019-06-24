@@ -90,7 +90,7 @@ def main():
     coordinates = shared.index_layout(layout)
     adjacency_list = get_adjacency_list(layout, coordinates)
     laplacian = shared.compute_laplacian(adjacency_list)
-    potentials = compute_harmonic_function(laplacian, args.b, args.level)
+    #potentials = compute_harmonic_function(laplacian, args.b, args.level)
 
     shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
     #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
