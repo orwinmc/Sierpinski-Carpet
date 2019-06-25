@@ -67,21 +67,32 @@ def get_adjacency_list(layout, coordinates, crosswires):
     for coordinate in tqdm(coordinates, total=len(coordinates)):
         row = []
         y, x = coordinate
-        #y % (crosswires+1) != 0 and
+
         if x > 0 and y % (crosswires+1) != 0 and layout[y, x-1] != -1:
             row.append(layout[y, x-1])
-        # x % (crosswires+1) != 0 and
         if y > 0 and x % (crosswires+1) != 0 and layout[y-1, x] != -1:
             row.append(layout[y-1, x])
-        # y % (crosswires+1) != 0 and
         if x < grid_size-1 and y % (crosswires+1) != 0 and layout[y, x+1] != -1:
             row.append(layout[y, x+1])
-        # x % (crosswires+1) != 0 and
         if y < grid_size-1 and x % (crosswires+1) != 0 and layout[y+1, x] != -1:
             row.append(layout[y+1, x])
         adjacency_list.append(row)
 
     return adjacency_list
+
+def get_energy(adjacency_list, coordinates, potentials, crosswires):
+    energy = 0.0
+    for i, row in enumerate(adjacency_list):
+        y, x = coordinates[i]
+        for index in row:
+            neighbor_y, neighbor_x = coordinates[index]
+
+            if y % (crosswires+1) != 0 and x % (crosswires+1) != 0 and neighbor_y % (crosswires+1) != 0 and neighbor_x % (crosswires+1) != 0:
+                energy += (1/(1.0))*(potentials[i]-potentials[index])**2
+            else:
+                energy += (1/(0.5))*(potentials[i]-potentials[index])**2
+
+    return energy/2;
 
 ## HERE IS WHERE INTERPOLATION BEGINS (NEEDS TO BE CONFIRMED AND CLEANED UP)
 

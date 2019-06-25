@@ -46,7 +46,7 @@ def left_to_right_potentials(b, crosswires, level):
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
-    return potentials, harmonic_function
+    return potentials, harmonic_function, boundary_indices
 
 def left_to_bottom_potentials(b, crosswires, level):
     edge_length = crosswires*b**level
@@ -62,7 +62,7 @@ def left_to_bottom_potentials(b, crosswires, level):
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
-    return potentials, harmonic_function
+    return potentials, harmonic_function, boundary_indices
 
 def exit_distribution_potentials(b, crosswires, level):
     edge_length = crosswires*b**level
@@ -70,7 +70,7 @@ def exit_distribution_potentials(b, crosswires, level):
     # Set Dirichlet Boundary Indices
     boundary_indices = []
     boundary_indices.extend(range(4*edge_length))
-    boundary_indices.append(random.randint(4*edge_length, len(coordinates)-1))
+    boundary_indices.append(((4*edge_length)+len(coordinates))/2)
 
     # Set Dirichlet Boundary
     boundary = np.full((4*edge_length+1), 0)
@@ -79,7 +79,7 @@ def exit_distribution_potentials(b, crosswires, level):
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
-    return potentials, harmonic_function
+    return potentials, harmonic_function, boundary_indices
 
 def potential_diff_distribution(adjacency_list, potentials, coordinates, grid_size):
     potentials_diff = np.empty((len(adjacency_list)))
@@ -103,6 +103,17 @@ def potential_diff_distribution(adjacency_list, potentials, coordinates, grid_si
     plt.colorbar()
     plt.show()
 
+def normal_derivative_boundary(adjacency_list, boundary_indices, potentials):
+    ys = []
+    for index in boundary_indices:
+        row = adjacency_list[index]
+        total = 0
+        for neighbors in row:
+            total += (potentials[neighbors]-potentials[index])
+        ys.append(total)
+
+    plt.plot(ys)
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -121,22 +132,32 @@ if __name__ == '__main__':
     grid_size, layout, coordinates, adjacency_list, laplacian = setup(args.b, args.l, args.crosswires, args.level)
 
     # Left to Right (0 -> 1) Harmonic Function
-    potentials, harmonic_function = left_to_right_potentials(args.b, args.crosswires, args.level)
+    potentials, harmonic_function, boundary_indices = left_to_right_potentials(args.b, args.crosswires, args.level)
     potential_diff_distribution(adjacency_list, potentials, coordinates, grid_size)
 
     # Energy Calculation
-    print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
+    print('resistance', 1/plus.get_energy(adjacency_list, coordinates, potentials, args.crosswires))
 
     # Left to Bottom (0 -> 1) Harmonic Function
-    potentials2, harmonic_function2 = left_to_bottom_potentials(args.b, args.crosswires, args.level)
+    #potentials2, harmonic_function2, boundary_indices2 = left_to_bottom_potentials(args.b, args.crosswires, args.level)
 
     # Exit Distribution Harmonic Function
-    potentials3, harmonic_function3 = exit_distribution_potentials(args.b, args.crosswires, args.level)
+    potentials3, harmonic_function3, boundary_indices3 = exit_distribution_potentials(args.b, args.crosswires, args.level)
+    normal_derivative_boundary(adjacency_list, boundary_indices3[:-1], potentials3)
+
+    max_edges = shared.max_edges(adjacency_list, potentials3, coordinates, grid_size)
+    for edge in max_edges:
+        print('------')
+        print('left edge', coordinates[edge[0], 0], coordinates[edge[0], 1])
+        print('right edge', coordinates[edge[1], 0], coordinates[edge[1], 1])
+        print('left potential', potentials3[edge[0]])
+        print('right potential', potentials3[edge[1]])
+        print('------')
 
 
 
     # Max Edge Portion
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    '''max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
     print(max_edges)
     min_coordinate = (-1, -1)
     for edge in max_edges:
@@ -145,4 +166,4 @@ if __name__ == '__main__':
         print('right edge', coordinates[edge[1], 0], coordinates[edge[1], 1])
         print('left potential', potentials[edge[0]])
         print('right potential', potentials[edge[1]])
-        print('------')
+        print('------')'''
