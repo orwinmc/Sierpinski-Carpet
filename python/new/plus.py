@@ -67,6 +67,7 @@ def get_adjacency_list(layout, coordinates, crosswires):
     for coordinate in tqdm(coordinates, total=len(coordinates)):
         row = []
         y, x = coordinate
+
         if x > 0 and y % (crosswires+1) != 0 and layout[y, x-1] != -1:
             row.append(layout[y, x-1])
         if y > 0 and x % (crosswires+1) != 0 and layout[y-1, x] != -1:
@@ -78,6 +79,20 @@ def get_adjacency_list(layout, coordinates, crosswires):
         adjacency_list.append(row)
 
     return adjacency_list
+
+def get_energy(adjacency_list, coordinates, potentials, crosswires):
+    energy = 0.0
+    for i, row in enumerate(adjacency_list):
+        y, x = coordinates[i]
+        for index in row:
+            neighbor_y, neighbor_x = coordinates[index]
+
+            if y % (crosswires+1) != 0 and x % (crosswires+1) != 0 and neighbor_y % (crosswires+1) != 0 and neighbor_x % (crosswires+1) != 0:
+                energy += (1/(1.0))*(potentials[i]-potentials[index])**2
+            else:
+                energy += (1/(1.0))*(potentials[i]-potentials[index])**2
+
+    return energy/2;
 
 ## HERE IS WHERE INTERPOLATION BEGINS (NEEDS TO BE CONFIRMED AND CLEANED UP)
 
@@ -102,7 +117,7 @@ def get_max_subcell(harmonic_function, b, crosswires, level, subcoordinate, subl
 
         return subcell
 
-def generate_interpolation(cell, b, c, interpolation_level, interpolation_layout):
+'''def generate_interpolation(cell, b, c, interpolation_level, interpolation_layout):
     points = []
     potentials = []
 
@@ -166,9 +181,9 @@ def generate_interpolation(cell, b, c, interpolation_level, interpolation_layout
             dirichlet.append(f(0, x))
 
     #print(dirichlet)
-    return np.array(dirichlet)
+    return np.array(dirichlet)'''
 
-def compute_interpolation_harmonic_function(interpolation_laplacian, b, crosswires, interpolation_level, dirichlet):
+'''def compute_interpolation_harmonic_function(interpolation_laplacian, b, crosswires, interpolation_level, dirichlet):
     print('Computing Interpolation Harmonic Function Potentials ...')
 
     num_coordinates = np.shape(interpolation_laplacian)[0]
@@ -186,7 +201,10 @@ def compute_interpolation_harmonic_function(interpolation_laplacian, b, crosswir
     interpolation_potentials = np.insert(interpolation_potentials, 0, dirichlet)
     #print(interpolation_potentials)
 
-    return interpolation_potentials
+    return interpolation_potentials'''
+
+
+
 
 def main():
     # Make printing a bit nicer for visualizing
@@ -227,12 +245,26 @@ def main():
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
+    # Energy Calculation
+    print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
+
+    # Max Edge Portion
+    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    print(max_edges)
+    min_coordinate = (-1, -1)
+    for edge in max_edges:
+        print('------')
+        print('left edge', coordinates[edge[0], 0], coordinates[edge[0], 1])
+        print('right edge', coordinates[edge[1], 0], coordinates[edge[1], 1])
+        print('left potential', potentials[edge[0]])
+        print('right potential', potentials[edge[1]])
+        print('------')
+
     # Exit Distribution
     # Set Dirichlet Boundary Indices
     boundary_indices = []
     boundary_indices.extend(range(4*edge_length))
     boundary_indices.append(random.randint(4*edge_length, len(coordinates)-1))
-    #print(boundary_indices)
 
     # Set Dirichlet Boundary
     boundary = np.full((4*edge_length+1), 0)
@@ -243,24 +275,12 @@ def main():
     #print(coordinates)
     #print(potentials2)
 
-    # Max Edge Portion
-    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    #print(max_edges)
-    #print('left edge', coordinates[max_edges[0,0], 0], coordinates[max_edges[0,0], 1])
-    #print('right edge', coordinates[max_edges[0,1], 0], coordinates[max_edges[0,1], 1])
-    #print('left potential', potentials[max_edges[0,0]])
-    #print('right potential', potentials[max_edges[0,1]])
+    #edge_diff_distribution = np
+    #for i, row in enumerate(adjacency_list)
+
+
 
     #print()
-
-    # Energy Calculation
-    #print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
-
-
-
-
-
-
 
     ## INTERPOLATION PORTION
     '''print('------------------------------------------------')

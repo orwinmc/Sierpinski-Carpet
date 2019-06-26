@@ -408,9 +408,9 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
 }
 
 int main() {
-    int b = 7;
+    int b = 3;
     int l = 1;
-    int level = 2;
+    int level = 6;
     int crosswires = 1;
     /*for (int level = 0; level<8; level++) {
         cout << "----------------------\n";

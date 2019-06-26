@@ -31,7 +31,7 @@ def display_grid_layout(layout, display_type='grid'):
             print()
 
 
-def display_harmonic_function(potentials, coordinates, grid_size, display_type='grid', num_contours=200):
+def display_harmonic_function(potentials, coordinates, grid_size, display_type='grid', num_contours=100, scale="linear"):
     ''' For viewing the harmonic functions computed. Two options are available
     ("grid" and "contour").  The harmonic function np array is returned (for
     convenience) '''
@@ -57,7 +57,10 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
         ax = plt.gca()
         ax.set_aspect('equal')
 
-        plt.contour(ys, xs, harmonic_function, levels=np.linspace(0, 1, num=num_contours))
+        if scale == "linear":
+            plt.contour(ys, xs, harmonic_function, levels=np.linspace(0, 1, num=num_contours))
+        elif scale == "cubic":
+            plt.contour(ys, xs, harmonic_function, levels=np.linspace(0, 1, num=num_contours)**3)
         plt.colorbar()
         plt.show()
 
@@ -66,9 +69,9 @@ def display_harmonic_function(potentials, coordinates, grid_size, display_type='
 
 def index_layout(layout):
     ''' Enumerates the layout of the given fractal.  At each location a -2 is
-    replaced by the index of the coordinate. Boundaries are indexed first in
-    counterclockwise order (but smallest to biggest) starting with the
-    left edge. '''
+    replaced by the index of the coordinate. All vertices are indexed in
+    counterclockwise order (spiraling inward) starting with the left edge. A
+    list of coordinates are also returned'''
 
     print('Indexing the given layout ...')
 
@@ -76,65 +79,38 @@ def index_layout(layout):
     grid_size = np.shape(layout)[0]
     current_index = 0
 
-    # Enumerates Left Edge
-    for y in range(grid_size):
-        if layout[y, 0] == -2:
-            layout[y, 0] = current_index
-            coordinates.append((y, 0))
-            current_index += 1
-
-    # Enumerates Bottom Edge
-    for x in range(grid_size):
-        if layout[grid_size-1, x] == -2:
-            layout[grid_size-1, x] = current_index
-            coordinates.append((grid_size-1, x))
-            current_index += 1
-
-    # Enumerates Right Edge
-    for y in range(grid_size-1, -1,-1):
-        if layout[y, grid_size-1] == -2:
-            layout[y, grid_size-1] = current_index
-            coordinates.append((y, grid_size-1))
-            current_index += 1
-
-    # Enumerates Top Edge
-    for x in range(grid_size-1, -1, -1):
-        if layout[0, x] == -2:
-            layout[0, x] = current_index
-            coordinates.append((0, x))
-            current_index += 1
-
-    # Enumerates remaining vertices
-    removed_layers = 1
-    while (grid_size - 2*removed_layers) > 0:
+    # This loop may need to be modified (ensuring progress bar but simpler)
+    for removed_layers in tqdm(range(0, int(np.ceil(grid_size/2.0))), total=int(np.ceil(grid_size/2.0))):
         # Enumerates Left Edge
-        for y in range(removed_layers,grid_size-removed_layers):
+        for y in range(removed_layers, grid_size-removed_layers):
             if layout[y, removed_layers] == -2:
                 layout[y, removed_layers] = current_index
                 coordinates.append((y, removed_layers))
                 current_index += 1
 
         # Enumerates Bottom Edge
-        for x in range(removed_layers, grid_size - removed_layers):
+        for x in range(removed_layers, grid_size-removed_layers):
             if layout[grid_size-1-removed_layers, x] == -2:
                 layout[grid_size-1-removed_layers, x] = current_index
                 coordinates.append((grid_size-1-removed_layers, x))
                 current_index += 1
 
         # Enumerates Right Edge
-        for y in range(grid_size-1 - removed_layers, removed_layers-1,-1):
+        for y in range(grid_size-1-removed_layers, removed_layers-1,-1):
             if layout[y, grid_size-1-removed_layers] == -2:
                 layout[y, grid_size-1-removed_layers] = current_index
                 coordinates.append((y, grid_size-1-removed_layers))
                 current_index += 1
 
         # Enumerates Top Edge
-        for x in range(grid_size-1 - removed_layers, removed_layers-1, -1):
+        for x in range(grid_size-1-removed_layers, removed_layers-1, -1):
             if layout[removed_layers, x] == -2:
                 layout[removed_layers, x] = current_index
                 coordinates.append((removed_layers, x))
                 current_index += 1
+
         removed_layers +=1
+
     return np.array(coordinates)
 
 
@@ -237,8 +213,8 @@ def get_energy(adjacency_list, potentials, r=1):
 
     return energy/2;
 
-
-def save_harmonics(b, l, level, potentials, coordinates, filename):
+## Needs to work for + and x Graph Approximations
+'''def save_harmonics(b, l, level, potentials, coordinates, filename):
     with open(filename, 'w') as fout:
         fout.write('Produced by "The Resistance",' + str(datetime.datetime.now()) + '\n')
         fout.write('---------------------------------------------------------\n')
@@ -247,4 +223,4 @@ def save_harmonics(b, l, level, potentials, coordinates, filename):
         fout.write('y\tx\tpotential\n')
         for i, coordinate in enumerate(coordinates):
             y, x = coordinate
-            fout.write('%d\t%d\t%f\n' % (y, x, potentials[i]))
+            fout.write('%d\t%d\t%f\n' % (y, x, potentials[i]))'''
