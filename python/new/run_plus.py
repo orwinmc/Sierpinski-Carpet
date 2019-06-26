@@ -64,14 +64,14 @@ def left_to_bottom_potentials(b, crosswires, level):
 
     return potentials, harmonic_function, boundary_indices
 
-def exit_distribution_potentials(b, crosswires, level):
+def exit_distribution_potentials(b, crosswires, level, l):
     edge_length = crosswires*b**level
 
     # Set Dirichlet Boundary Indices
     boundary_indices = []
     boundary_indices.extend(range(4*edge_length))
     #print(plus.get_grid_size(b, crosswires, level-1)//2)
-    boundary_indices.append(len(coordinates)- crosswires*b**(level-1)//2-1)
+    boundary_indices.append(len(coordinates)- l*crosswires*b**(level-1)//2-1)
 
     # Set Dirichlet Boundary
     boundary = np.full((4*edge_length+1), 0)
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     #potentials2, harmonic_function2, boundary_indices2 = left_to_bottom_potentials(args.b, args.crosswires, args.level)
 
     # Exit Distribution Harmonic Function
-    potentials3, harmonic_function3, boundary_indices3 = exit_distribution_potentials(args.b, args.crosswires, args.level)
+    potentials3, harmonic_function3, boundary_indices3 = exit_distribution_potentials(args.b, args.crosswires, args.level, args.l)
     normal_derivative_boundary(adjacency_list, boundary_indices3[:-1], potentials3)
 
     # Resistance Calculation
