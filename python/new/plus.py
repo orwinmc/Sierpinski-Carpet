@@ -90,7 +90,7 @@ def get_energy(adjacency_list, coordinates, potentials, crosswires):
             if y % (crosswires+1) != 0 and x % (crosswires+1) != 0 and neighbor_y % (crosswires+1) != 0 and neighbor_x % (crosswires+1) != 0:
                 energy += (1/(1.0))*(potentials[i]-potentials[index])**2
             else:
-                energy += (1/(0.5))*(potentials[i]-potentials[index])**2
+                energy += (1/(1.0))*(potentials[i]-potentials[index])**2
 
     return energy/2;
 

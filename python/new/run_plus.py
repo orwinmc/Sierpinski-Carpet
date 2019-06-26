@@ -70,7 +70,8 @@ def exit_distribution_potentials(b, crosswires, level):
     # Set Dirichlet Boundary Indices
     boundary_indices = []
     boundary_indices.extend(range(4*edge_length))
-    boundary_indices.append(((4*edge_length)+len(coordinates))/2)
+    print(plus.get_grid_size(b, crosswires, level-1)//2)
+    boundary_indices.append(len(coordinates)- crosswires*b**(level-1)//2-1)
 
     # Set Dirichlet Boundary
     boundary = np.full((4*edge_length+1), 0)
@@ -115,6 +116,16 @@ def normal_derivative_boundary(adjacency_list, boundary_indices, potentials):
     plt.plot(ys)
     plt.show()
 
+    # Code for Chris
+    a = ys[len(ys)/4:2*len(ys)/4]
+    b = ys[3*len(ys)/4:]
+    c = []
+    for i, val in enumerate(a):
+        c.append(b[i]/a[i])
+
+    plt.plot(c)
+    plt.show()
+
 
 if __name__ == '__main__':
     # Make printing a bit nicer for visualizing
@@ -132,11 +143,12 @@ if __name__ == '__main__':
     grid_size, layout, coordinates, adjacency_list, laplacian = setup(args.b, args.l, args.crosswires, args.level)
 
     # Left to Right (0 -> 1) Harmonic Function
-    potentials, harmonic_function, boundary_indices = left_to_right_potentials(args.b, args.crosswires, args.level)
-    potential_diff_distribution(adjacency_list, potentials, coordinates, grid_size)
+    #potentials, harmonic_function, boundary_indices = left_to_right_potentials(args.b, args.crosswires, args.level)
+    #potential_diff_distribution(adjacency_list, potentials, coordinates, grid_size)
 
-    # Energy Calculation
-    print('resistance', 1/plus.get_energy(adjacency_list, coordinates, potentials, args.crosswires))
+    # Resistance Calculation
+
+    #print('resistance', 1/shared.get_energy(adjacency_list, potentials))
 
     # Left to Bottom (0 -> 1) Harmonic Function
     #potentials2, harmonic_function2, boundary_indices2 = left_to_bottom_potentials(args.b, args.crosswires, args.level)
@@ -145,14 +157,17 @@ if __name__ == '__main__':
     potentials3, harmonic_function3, boundary_indices3 = exit_distribution_potentials(args.b, args.crosswires, args.level)
     normal_derivative_boundary(adjacency_list, boundary_indices3[:-1], potentials3)
 
-    max_edges = shared.max_edges(adjacency_list, potentials3, coordinates, grid_size)
+    # Max Edges
+    '''max_edges = shared.max_edges(adjacency_list, potentials3, coordinates, grid_size)
     for edge in max_edges:
         print('------')
         print('left edge', coordinates[edge[0], 0], coordinates[edge[0], 1])
         print('right edge', coordinates[edge[1], 0], coordinates[edge[1], 1])
         print('left potential', potentials3[edge[0]])
         print('right potential', potentials3[edge[1]])
-        print('------')
+        print('------')'''
+
+
 
 
 
