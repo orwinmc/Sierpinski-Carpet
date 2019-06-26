@@ -70,7 +70,7 @@ def exit_distribution_potentials(b, crosswires, level):
     # Set Dirichlet Boundary Indices
     boundary_indices = []
     boundary_indices.extend(range(4*edge_length))
-    print(plus.get_grid_size(b, crosswires, level-1)//2)
+    #print(plus.get_grid_size(b, crosswires, level-1)//2)
     boundary_indices.append(len(coordinates)- crosswires*b**(level-1)//2-1)
 
     # Set Dirichlet Boundary
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
     # Resistance Calculation
 
-    #print('resistance', 1/shared.get_energy(adjacency_list, potentials))
+    #
 
     # Left to Bottom (0 -> 1) Harmonic Function
     #potentials2, harmonic_function2, boundary_indices2 = left_to_bottom_potentials(args.b, args.crosswires, args.level)
@@ -157,15 +157,18 @@ if __name__ == '__main__':
     potentials3, harmonic_function3, boundary_indices3 = exit_distribution_potentials(args.b, args.crosswires, args.level)
     normal_derivative_boundary(adjacency_list, boundary_indices3[:-1], potentials3)
 
+    # Resistance Calculation
+    print('resistance', 1/shared.get_energy(adjacency_list, potentials3))
+
     # Max Edges
-    '''max_edges = shared.max_edges(adjacency_list, potentials3, coordinates, grid_size)
+    max_edges = shared.max_edges(adjacency_list, potentials3, coordinates, grid_size)
     for edge in max_edges:
         print('------')
         print('left edge', coordinates[edge[0], 0], coordinates[edge[0], 1])
         print('right edge', coordinates[edge[1], 0], coordinates[edge[1], 1])
         print('left potential', potentials3[edge[0]])
         print('right potential', potentials3[edge[1]])
-        print('------')'''
+        print('------')
 
 
 
