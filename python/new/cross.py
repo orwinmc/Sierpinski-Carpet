@@ -90,11 +90,28 @@ def main():
     coordinates = shared.index_layout(layout)
     adjacency_list = get_adjacency_list(layout, coordinates)
     laplacian = shared.compute_laplacian(adjacency_list)
+
+    edge_length = grid_size//2+1
+    boundary_indices = []
+    boundary_indices.extend(range(edge_length))
+    boundary_indices.extend(range(2*edge_length-2, 3*edge_length-2))
+    #print(boundary_indices)
+
+    boundary = np.zeros((2*edge_length))
+    boundary[edge_length:] = 1
+    #print(boundary)
+
+    potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
+    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+
+    print('resistance', 1/shared.get_energy(adjacency_list, potentials))
+
     #potentials = compute_harmonic_function(laplacian, args.b, args.level)
 
-    shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    #print(max_edges)
+    #shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    print(coordinates[max_edges[0,0]], coordinates[max_edges[0,1]])
+    print(abs(potentials[max_edges[0,0]]-potentials[max_edges[0,1]]))
 
     '''filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)+'.dat'
     shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)'''

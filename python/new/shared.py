@@ -171,7 +171,7 @@ def compute_harmonic_function(laplacian, boundary_indices, boundary):
     return potentials
 
 
-def max_edges(adjacency_list, potentials, coordinates, grid_size):
+def max_edges(adjacency_list, potentials, coordinates, grid_size, boundary_indices):
     ''' Finds the maximum edges in a given fractal (based on the associated
     adjacency matrix).  Returns the coordinates of these edges in a list
     (Should probably just return the indices based on coordinates****)'''
@@ -181,7 +181,7 @@ def max_edges(adjacency_list, potentials, coordinates, grid_size):
 
     for i, row in enumerate(adjacency_list):
         for index in row:
-            if i < index:
+            if i < index and i not in boundary_indices and index not in boundary_indices:
                 min_potential_index = -1
                 max_potential_index = -1
 
@@ -203,6 +203,28 @@ def max_edges(adjacency_list, potentials, coordinates, grid_size):
 
 
     return np.array(max_edges)
+
+def max_chains(adjacency_list, potentials, coordinates, max_length=5):
+    max_chains = np.zeros((max_length+1))
+
+    for i, row in tqdm(enumerate(adjacency_list), total=len(adjacency_list)):
+        stack = []
+        starting_potential = potentials[i]
+        stack.append((i, 0))
+
+        while len(stack) > 0:
+            index, chain_length = stack.pop(0)
+            if chain_length <= max_length:
+                if max_chains[chain_length] < potentials[index]-starting_potential:
+                    max_chains[chain_length] = potentials[index]-starting_potential
+            else:
+                break
+
+            for j in adjacency_list[index]:
+                if potentials[j] > potentials[index]:
+                    stack.append((j, chain_length+1))
+
+    print(max_chains)
 
 
 def get_energy(adjacency_list, potentials, r=1):

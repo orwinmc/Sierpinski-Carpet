@@ -213,7 +213,8 @@ void print_mtrx(Eigen::SparseMatrix<double> & mtrx) {
     }
 }
 
-void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<long>> & adjacency_list) {
+template<typename Derived>
+void find_potentials(Eigen::MatrixBase<Derived>& potentials, vector< vector<long>> & adjacency_list) {
     /*struct rlimit lim;
     getrlimit(RLIMIT_STACK, &lim);
     cout << lim.rlim_cur << endl;*/
@@ -268,20 +269,34 @@ void find_potentials(Eigen::SparseMatrix<double> & potentials, vector< vector<lo
     }
 
     cout << "5) Solving ..." << endl;
-    Eigen::SparseMatrix<double> b = -r*dirichlet;
-    Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
-    solver.analyzePattern(a);
-    solver.factorize(a);
-    potentials = solver.solve(b);
+    Eigen::VectorXd b = -r*dirichlet;
+    //Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+    //solver.analyzePattern(a);
+    //solver.factorize(a);
+    //potentials = solver.solve(b);
 
-    //Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> cg;
-    //cg.compute(a);
-    //potentials = cg.solve(b);
-    //print_mtrx(x);
+
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper> cg;
+
+    cg.compute(a);
+    cg.setMaxIterations(1);
+    potentials = cg.solve(b);
+
+    //Eigen::Matrix<double> potentials(2, 1);
+
+    for (int i = 0; i<500; i++) {
+        potentials = cg.solveWithGuess(b, potentials);
+        cout << 1*(i+1) << endl;
+        cout << cg.error() << endl;
+    }
+
+
+    //print_mtrx(potentials);
 }
 
 // TO BE CLEANED UP
-double max_difference(vector< vector<long>> & adjacency_list, Eigen::SparseMatrix<double> & potentials) {
+template<typename Derived>
+double max_difference(vector< vector<long>> & adjacency_list, Eigen::MatrixBase<Derived>& potentials) {
     long num_coordinates = adjacency_list.size();
     int num_computed_points = potentials.rows();
     int num_boundary_points = num_coordinates-num_computed_points;
@@ -372,7 +387,7 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
     cout << "Compute Potentials ..." << endl;
     int num_boundary_points = 2*crosswires*pow(b,level);
     int num_computed_points = num_coordinates-num_boundary_points;
-    Eigen::SparseMatrix<double> potentials(num_computed_points, 1);
+    Eigen::VectorXd potentials(num_computed_points);
     find_potentials(potentials, adjacency_list);
 
     // To be fixed up
@@ -410,8 +425,9 @@ int harmonic_function(int b, int l, int level, int crosswires, string filename) 
 int main() {
     int b = 3;
     int l = 1;
-    int level = 6;
+    int level = 8;
     int crosswires = 1;
+    omp_set_num_threads(4);
     /*for (int level = 0; level<8; level++) {
         cout << "----------------------\n";
         string filename = "../data/plus/plusdata_"+to_string(b)+"_"+to_string(l)+"_"+to_string(crosswires)+"_level"+to_string(level)+".dat";
