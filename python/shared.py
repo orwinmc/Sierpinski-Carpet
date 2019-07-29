@@ -226,6 +226,43 @@ def max_chains(adjacency_list, potentials, coordinates, max_length=5):
 
     print(max_chains)
 
+def max_chains2(adjacency_list, potentials, coordinates, grid_size, chain_length=1):
+    max_chains = np.zeros((grid_size, grid_size))
+
+    for i, start in tqdm(enumerate(coordinates), total=len(coordinates)):
+        start_row, start_col = start
+        potential_start = potentials[i]
+        #print(i)
+        for j, end in enumerate(coordinates):
+            end_row, end_col = end
+            potential_end = potentials[j]
+            if potential_end > potential_start:
+                #print(potential_end, potential_start)
+                row_diff = abs(end_row-start_row)
+                col_diff = abs(end_col-start_col)
+                if row_diff > col_diff:
+                    row_diff, col_diff = col_diff, row_diff
+
+                #print(row_diff, col_diff)
+
+                if max_chains[row_diff, col_diff] < potential_end-potential_start:
+                    max_chains[row_diff, col_diff] = potential_end-potential_start
+
+    #print(max_chains)
+
+    dists = []
+    differences = []
+
+    for i, row in enumerate(max_chains):
+        for j, val in enumerate(row):
+            if val != 0:
+                dists.append(np.sqrt(i**2+j**2))
+                differences.append(val)
+
+    plt.scatter(dists, differences)
+    plt.show()
+
+
 
 def get_energy(adjacency_list, potentials, r=1):
     energy = 0.0

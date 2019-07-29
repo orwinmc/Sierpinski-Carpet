@@ -145,7 +145,8 @@ if __name__ == '__main__':
     # Left to Right (0 -> 1) Harmonic Function
     potentials, harmonic_function, boundary_indices = left_to_right_potentials(args.b, args.crosswires, args.level)
     potential_diff_distribution(adjacency_list, potentials, coordinates, grid_size)
-    shared.max_chains(adjacency_list, potentials, coordinates, max_length=20)
+    #shared.max_chains(adjacency_list, potentials, coordinates, max_length=20)
+    shared.max_chains2(adjacency_list, potentials, coordinates, grid_size)
 
     # Exit Distribution Harmonic Function
     #potentials, harmonic_function, boundary_indices = exit_distribution_potentials(args.b, args.crosswires, args.level, args.l)
