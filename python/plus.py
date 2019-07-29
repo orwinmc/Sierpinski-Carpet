@@ -246,10 +246,10 @@ def main():
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
 
     # Energy Calculation
-    print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
+    #print('resistance', 1/shared.get_energy(adjacency_list, potentials, 1))
 
     # Max Edge Portion
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    '''max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
     print(max_edges)
     min_coordinate = (-1, -1)
     for edge in max_edges:
@@ -258,20 +258,20 @@ def main():
         print('right edge', coordinates[edge[1], 0], coordinates[edge[1], 1])
         print('left potential', potentials[edge[0]])
         print('right potential', potentials[edge[1]])
-        print('------')
+        print('------')'''
 
     # Exit Distribution
     # Set Dirichlet Boundary Indices
-    boundary_indices = []
-    boundary_indices.extend(range(4*edge_length))
-    boundary_indices.append(random.randint(4*edge_length, len(coordinates)-1))
+    #boundary_indices = []
+    #boundary_indices.extend(range(4*edge_length))
+    #boundary_indices.append(random.randint(4*edge_length, len(coordinates)-1))
 
     # Set Dirichlet Boundary
-    boundary = np.full((4*edge_length+1), 0)
-    boundary[-1] = 1
+    #boundary = np.full((4*edge_length+1), 0)
+    #boundary[-1] = 1
 
-    potentials2 = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
-    harmonic_function2 = shared.display_harmonic_function(potentials2, coordinates, grid_size, display_type='grid')
+    #potentials2 = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
+    #harmonic_function2 = shared.display_harmonic_function(potentials2, coordinates, grid_size, display_type='grid')
     #print(coordinates)
     #print(potentials2)
 
