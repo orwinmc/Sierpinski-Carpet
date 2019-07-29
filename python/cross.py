@@ -109,9 +109,9 @@ def main():
     #potentials = compute_harmonic_function(laplacian, args.b, args.level)
 
     #shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-    max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    print(coordinates[max_edges[0,0]], coordinates[max_edges[0,1]])
-    print(abs(potentials[max_edges[0,0]]-potentials[max_edges[0,1]]))
+    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
+    #print(coordinates[max_edges[0,0]], coordinates[max_edges[0,1]])
+    #print(abs(potentials[max_edges[0,0]]-potentials[max_edges[0,1]]))
 
     '''filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)+'.dat'
     shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)'''
