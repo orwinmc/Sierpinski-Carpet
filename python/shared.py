@@ -273,7 +273,7 @@ def get_energy(adjacency_list, potentials, r=1):
     return energy/2;
 
 ## Needs to work for + and x Graph Approximations
-'''def save_harmonics(b, l, level, potentials, coordinates, filename):
+def save_harmonics(b, l, level, potentials, coordinates, filename):
     with open(filename, 'w') as fout:
         fout.write('Produced by "The Resistance",' + str(datetime.datetime.now()) + '\n')
         fout.write('---------------------------------------------------------\n')
@@ -282,4 +282,4 @@ def get_energy(adjacency_list, potentials, r=1):
         fout.write('y\tx\tpotential\n')
         for i, coordinate in enumerate(coordinates):
             y, x = coordinate
-            fout.write('%d\t%d\t%f\n' % (y, x, potentials[i]))'''
+            fout.write('%d\t%d\t%f\n' % (y, x, potentials[i]))
