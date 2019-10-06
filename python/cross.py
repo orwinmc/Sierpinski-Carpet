@@ -14,9 +14,25 @@ import scipy.sparse.linalg as la
 import shared
 
 def get_grid_size(b, level):
+    ''' Return the number of rows in the 2D which holds the Graphical
+    Approximation (One can also think of this as the highest y value of the
+    coordinates list + 1). '''
+
     return 2 * b**level + 1
 
+def get_edge_length(b, level):
+    ''' Return the number of vertices which are on the border of the Graphical
+    Approximation. '''
+
+    grid_size = get_grid_size(b, level)
+    return grid_size//2+1
+
 def get_grid_layout(b, l, level):
+    ''' Returns a 2D Numpy array of dtype=object.  Every location either has the
+    value -1 or -2.  If a array location has -2 that means a vertex is present in
+    the graphical approximation.  Alternatively -1 represents a hole in the
+    approximation.'''
+
     print('Generating Grid Layout ...')
 
     if (l!=0 and b%2 != l%2) or b==l:
@@ -46,6 +62,10 @@ def get_grid_layout(b, l, level):
     return layout
 
 def get_adjacency_list(layout, coordinates):
+    ''' Returns a generic python list which acts as an adjaceny list for the
+    coordinates provided.  For the x Graphical Approximation, vertices are
+    connected if they are diagonal from each other. '''
+
     print('Computing Adjacency List ...')
 
     adjacency_list = []
@@ -67,7 +87,32 @@ def get_adjacency_list(layout, coordinates):
 
     return adjacency_list
 
+def left_to_right_potentials(b, level, coordinates, laplacian):
+    ''' Generates the harmonic function which is entirely 1 on the left side,
+    and 0 on the right side.  In order to do this, the associated indices of the
+    boundary are computed.  The potentials computed are returned'''
+
+    grid_size = get_grid_size(b, level)
+    edge_length = get_edge_length(b, level)
+
+    # Get Boundary Indices
+    boundary_indices = []
+    boundary_indices.extend(range(edge_length))
+    boundary_indices.extend(range(2*edge_length-2, 3*edge_length-2))
+
+    # Dirichlet Boundary Conditions
+    boundary = np.zeros((2*edge_length))
+    boundary[:edge_length] = 1
+
+    potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
+    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
+
+    return potentials
+
 def main():
+    ''' Executed with `python cross.py`.  This takes parameters from the user
+    and generates the associated harmonic function potentials. '''
+
     # Make printing a bit nicer for visualizing
     np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
 
@@ -91,30 +136,7 @@ def main():
     adjacency_list = get_adjacency_list(layout, coordinates)
     laplacian = shared.compute_laplacian(adjacency_list)
 
-    edge_length = grid_size//2+1
-    boundary_indices = []
-    boundary_indices.extend(range(edge_length))
-    boundary_indices.extend(range(2*edge_length-2, 3*edge_length-2))
-    #print(boundary_indices)
-
-    boundary = np.zeros((2*edge_length))
-    boundary[edge_length:] = 1
-    #print(boundary)
-
-    potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
-    harmonic_function = shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-
-    print('resistance', 1/shared.get_energy(adjacency_list, potentials))
-
-    #potentials = compute_harmonic_function(laplacian, args.b, args.level)
-
-    #shared.display_harmonic_function(potentials, coordinates, grid_size, display_type='grid')
-    #max_edges = shared.max_edges(adjacency_list, potentials, coordinates, grid_size)
-    #print(coordinates[max_edges[0,0]], coordinates[max_edges[0,1]])
-    #print(abs(potentials[max_edges[0,0]]-potentials[max_edges[0,1]]))
-
-    '''filename = '../../data/cross/'+str(args.b)+'_'+str(args.l)+'/crossdata_'+str(args.b)+'_'+str(args.l)+'_level'+str(args.level)+'.dat'
-    shared.save_harmonics(args.b, args.l, args.level, potentials, coordinates, filename)'''
+    potentials = left_to_right_potentials(args.b, args.level, coordinates, laplacian)
 
 if __name__ == '__main__':
     main()
