@@ -16,7 +16,7 @@ import shared
 
 def display_grid_layout(layout, display_type='grid'):
     ''' For viewing the fractal (SC) layout. Two options are available
-    ("terminal" and "matplotlib") '''
+    ("terminal" and "matplotlib")'''
 
     if display_type == 'matplotlib':
         plt.imshow(layout.astype(int))
@@ -256,10 +256,27 @@ def max_chains2(adjacency_list, potentials, coordinates, grid_size, chain_length
     for i, row in enumerate(max_chains):
         for j, val in enumerate(row):
             if val != 0:
-                dists.append(np.sqrt(i**2+j**2))
+                dists.append(np.sqrt(i**2+j**2)/(grid_size-1))
                 differences.append(val)
 
+    #dists = np.log(dists)
+    #differences = np.log(differences)
     plt.scatter(dists, differences)
+
+    '''lowest_slope_dist = 1
+    lowest_slope_difference = 1
+    for i, dist in enumerate(dists):
+        if dist < 0 and differences[i]/dist < lowest_slope_difference/lowest_slope_dist:
+            lowest_slope_difference = differences[i]
+            lowest_slope_dist = dist
+
+
+
+    print(lowest_slope_difference, lowest_slope_dist)
+    xs = np.linspace(-3, 0, num=100)
+    ys = xs*(lowest_slope_difference/lowest_slope_dist)
+
+    plt.plot(xs, ys)'''
     plt.show()
 
 
