@@ -87,8 +87,7 @@ def top_to_bottom_potentials(b, level, resolution, laplacian):
     potentials = shared.compute_harmonic_function(laplacian, boundary_indices, boundary)
     harmonic_function = shared.display_harmonic_function(potentials, coordinates, edge_length, display_type='grid')
 
-
-if __name__ == '__main__':
+def main():
     # Make printing a bit nicer for visualizing
     np.set_printoptions(threshold=sys.maxsize, linewidth=sys.maxsize)
 
@@ -106,4 +105,8 @@ if __name__ == '__main__':
     coordinates = get_coordinates(args.b, args.l, args.level, args.resolution)
     adjacency_list = get_adjacency_list(coordinates)
     laplacian = shared.compute_laplacian(adjacency_list)
+    
     top_to_bottom_potentials(args.b, args.level, args.resolution, laplacian)
+
+if __name__ == '__main__':
+    main()
